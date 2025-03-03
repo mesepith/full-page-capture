@@ -8,7 +8,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "captureVisibleTab") {
       chrome.tabs.captureVisibleTab(
         null, 
-        { format: "png", quality: 100 }, // Use maximum quality
+        { format: "png", quality: 100 },
         dataUrl => {
           sendResponse(dataUrl);
         }
@@ -46,15 +46,88 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       bodyOverflow: document.body.style.overflow,
       bodyWidth: document.body.style.width,
       bodyHeight: document.body.style.height,
-      docOverflow: document.documentElement.style.overflow,
-      viewportWidth: window.innerWidth,
-      viewportHeight: window.innerHeight,
-      docWidth: document.documentElement.scrollWidth,
-      docHeight: document.documentElement.scrollHeight
+      docOverflow: document.documentElement.style.overflow
     };
+  
+    // Store of fixed elements and their original styles
+    const fixedElementsStore = [];
+  
+    // Function to identify and store fixed elements
+    function identifyFixedElements() {
+      // Clear the store first to prevent duplicates
+      fixedElementsStore.length = 0;
+  
+      // Get all elements in the DOM
+      const allElements = document.querySelectorAll('*');
+  
+      allElements.forEach(el => {
+        const computedStyle = window.getComputedStyle(el);
+        if (computedStyle.position === 'fixed' || computedStyle.position === 'sticky') {
+          // Store the element and its original styles
+          fixedElementsStore.push({
+            element: el,
+            originalStyles: {
+              position: el.style.position,
+              top: el.style.top,
+              display: el.style.display,
+              visibility: el.style.visibility,
+              opacity: el.style.opacity,
+              zIndex: el.style.zIndex
+            },
+            rect: el.getBoundingClientRect()
+          });
+        }
+      });
+  
+      return fixedElementsStore.length;
+    }
+  
+    // Function to handle fixed elements for each viewport
+    function handleFixedElementsForViewport(isFirstViewport, scrollTop) {
+      fixedElementsStore.forEach(item => {
+        const el = item.element;
+  
+        if (isFirstViewport) {
+          // Let fixed elements appear normally in the first viewport
+          // But mark them with a data attribute for easy identification
+          el.dataset.captureAsFixed = 'true';
+        } else {
+          // For subsequent viewports, we have two strategies:
+  
+          // 1. Hide elements completely
+          el.style.display = 'none';
+  
+          // 2. Alternative approach: Convert fixed to absolute to keep them in flow
+          // but only at their original positions
+          /*
+          if (el.dataset.captureAsFixed === 'true') {
+            el.style.display = 'none';
+          } else {
+            el.style.position = 'absolute';
+            el.style.top = (item.rect.top + scrollTop) + 'px';
+          }
+          */
+        }
+      });
+    }
+  
+    // Function to restore all fixed elements to their original state
+    function restoreFixedElements() {
+      fixedElementsStore.forEach(item => {
+        const el = item.element;
+        Object.assign(el.style, item.originalStyles);
+        if (el.dataset.captureAsFixed) {
+          delete el.dataset.captureAsFixed;
+        }
+      });
+    }
   
     // Helper function to restore original page state
     function restoreOriginalState() {
+      // Restore fixed elements
+      restoreFixedElements();
+  
+      // Restore page properties
       document.body.style.overflow = originalState.bodyOverflow;
       document.body.style.width = originalState.bodyWidth;
       document.body.style.height = originalState.bodyHeight;
@@ -82,6 +155,33 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       };
     }
   
+    // Specifically for squareyards.com - directly target their fixed header
+    function handleSquareYardsSpecific(isFirstViewport) {
+      // Try to get the main navigation/header by common selectors
+      const possibleHeaders = [
+        document.querySelector('.navbar-fixed'),
+        document.querySelector('header'),
+        document.querySelector('.header'),
+        document.querySelector('#header'),
+        document.querySelector('.header-container'),
+        document.querySelector('.navigation'),
+        document.querySelector('.nav-wrapper'),
+        // Add more possible selectors here
+      ].filter(Boolean); // Remove null/undefined elements
+  
+      if (possibleHeaders.length) {
+        possibleHeaders.forEach(header => {
+          if (isFirstViewport) {
+            // Let it show in first viewport
+            header.dataset.isMainHeader = 'true';
+          } else {
+            // Hide in all other viewports
+            header.style.display = 'none';
+          }
+        });
+      }
+    }
+  
     // Prevent scrolling during capture
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
@@ -91,6 +191,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         // Get page dimensions before we start capturing
         const pageDimensions = getPageDimensions();
         console.log(`Page dimensions: ${pageDimensions.width}x${pageDimensions.height}`);
+  
+        // Initial identification of fixed elements
+        const fixedElementCount = identifyFixedElements();
+        console.log(`Identified ${fixedElementCount} fixed elements`);
   
         // Get device pixel ratio
         const pixelRatio = window.devicePixelRatio || 1;
@@ -114,7 +218,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 img.onload = () => resolve(img);
                 img.src = imageUrl;
               });
-            }, 200);
+            }, 300); // Increased timeout for better rendering
           });
         };
   
@@ -129,6 +233,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         console.log(`Capturing ${numHorizontalScreenshots}x${numVerticalScreenshots} grid`);
   
         // Capture the entire page by scrolling both horizontally and vertically
+        let isFirstCapture = true;
+  
         for (let y = 0; y < numVerticalScreenshots; y++) {
           for (let x = 0; x < numHorizontalScreenshots; x++) {
             // Scroll to position
@@ -138,13 +244,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             window.scrollTo(scrollLeft, scrollTop);
   
             // Wait for the page to render after scrolling
-            await new Promise(resolve => setTimeout(resolve, 300));
+            await new Promise(resolve => setTimeout(resolve, 500)); // Increased timeout
+  
+            // Handle fixed elements differently for first viewport vs. others
+            handleFixedElementsForViewport(isFirstCapture, scrollTop);
+  
+            // Also try direct targeting for Square Yards website
+            handleSquareYardsSpecific(isFirstCapture);
+  
+            // After first capture, we won't want fixed elements anymore
+            if (isFirstCapture) {
+              isFirstCapture = false;
+            }
   
             // Capture and draw current viewport
             const img = await captureViewport();
   
-            // Log the captured area
-            console.log(`Capturing area at: ${scrollLeft}x${scrollTop}`);
+            // Log the captured area for debugging
+            console.log(`Capturing area at: ${scrollLeft}x${scrollTop}, size: ${img.width}x${img.height}`);
   
             // Draw the image at the correct position
             ctx.drawImage(
