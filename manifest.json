@@ -1,19 +1,24 @@
 {
+    "manifest_version": 3,
     "name": "Full Page Screenshot",
     "version": "1.0",
-    "description": "Captures a full page screenshot (scrolls through and stitches).",
-    "manifest_version": 3,
-    "permissions": [
-      "activeTab",
-      "scripting",
-      "tabs",
-      "storage"
-    ],
-    "action": {
-      "default_popup": "popup.html"
-    },
+    "description": "Captures a screenshot of the entire webpage, including scrollable content",
+    "permissions": ["activeTab", "scripting", "downloads"],
     "background": {
       "service_worker": "background.js"
+    },
+    "action": {
+      "default_popup": "popup.html",
+      "default_icon": {
+        "16": "images/icon16.png",
+        "48": "images/icon48.png",
+        "128": "images/icon128.png"
+      }
+    },
+    "icons": {
+      "16": "images/icon16.png",
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
     }
   }
   
