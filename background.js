@@ -63,18 +63,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       allElements.forEach(el => {
         const computedStyle = window.getComputedStyle(el);
         if (computedStyle.position === 'fixed' || computedStyle.position === 'sticky') {
-          // Store the element and its original styles
+          // Check if this is the form or a container of the form
+          const isContactForm = isContactFormElement(el);
+  
+          // Store the element with its classification
           fixedElementsStore.push({
             element: el,
             originalStyles: {
               position: el.style.position,
               top: el.style.top,
+              right: el.style.right,
               display: el.style.display,
               visibility: el.style.visibility,
               opacity: el.style.opacity,
               zIndex: el.style.zIndex
             },
-            rect: el.getBoundingClientRect()
+            rect: el.getBoundingClientRect(),
+            isContactForm: isContactForm,
+            isTopNav: isTopNavElement(el)
           });
         }
       });
@@ -82,31 +88,99 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       return fixedElementsStore.length;
     }
   
+    // Function to check if an element is part of the contact form
+    function isContactFormElement(el) {
+      // Text content check
+      const textContent = el.textContent || '';
+      if (textContent.includes('Contact our Real Estate Experts')) {
+        return true;
+      }
+  
+      // Check for common form elements
+      const isForm = el.tagName === 'FORM' || 
+                     el.classList.contains('form') || 
+                     el.classList.contains('contact-form') ||
+                     el.classList.contains('contact-widget') ||
+                     el.classList.contains('lead-form') ||
+                     el.classList.contains('sticky-form');
+  
+      // Position check - forms often have specific right positioning
+      const computedStyle = window.getComputedStyle(el);
+      const onRightSide = computedStyle.right === '0px' || 
+                         (parseFloat(computedStyle.right) < 100 && 
+                          parseFloat(computedStyle.right) > 0);
+  
+      // Check for form elements inside
+      const hasFormElements = el.querySelector('input, select, textarea, button');
+  
+      // Specific Square Yards selectors
+      const isSquareYardsForm = el.classList.contains('enquiry-form') ||
+                               el.classList.contains('sy-form') ||
+                               el.id === 'enquiryForm';
+  
+      return isForm || (onRightSide && hasFormElements) || isSquareYardsForm;
+    }
+  
+    // Function to check if an element is part of the top navigation
+    function isTopNavElement(el) {
+      // Check if it's a navigation element
+      const isNav = el.tagName === 'NAV' || 
+                   el.tagName === 'HEADER' ||
+                   el.classList.contains('navbar') ||
+                   el.classList.contains('header') ||
+                   el.classList.contains('nav-wrapper') ||
+                   el.classList.contains('navigation');
+  
+      // Check if it's positioned at the top
+      const computedStyle = window.getComputedStyle(el);
+      const atTop = computedStyle.top === '0px' || 
+                   parseFloat(computedStyle.top) === 0;
+  
+      // Specific Square Yards selectors
+      const isSquareYardsNav = el.classList.contains('navbar-fixed') ||
+                             el.classList.contains('header-wrapper');
+  
+      return (isNav && atTop) || isSquareYardsNav;
+    }
+  
     // Function to handle fixed elements for each viewport
-    function handleFixedElementsForViewport(isFirstViewport, scrollTop) {
+    function handleFixedElementsForViewport(scrollTop, viewportHeight) {
       fixedElementsStore.forEach(item => {
         const el = item.element;
   
-        if (isFirstViewport) {
-          // Let fixed elements appear normally in the first viewport
-          // But mark them with a data attribute for easy identification
-          el.dataset.captureAsFixed = 'true';
-        } else {
-          // For subsequent viewports, we have two strategies:
-  
-          // 1. Hide elements completely
-          el.style.display = 'none';
-  
-          // 2. Alternative approach: Convert fixed to absolute to keep them in flow
-          // but only at their original positions
-          /*
-          if (el.dataset.captureAsFixed === 'true') {
-            el.style.display = 'none';
+        if (item.isTopNav) {
+          // For top navigation bars
+          if (scrollTop < viewportHeight) {
+            // Show in first viewport only
+            el.style.display = item.originalStyles.display;
+            el.style.visibility = item.originalStyles.visibility;
           } else {
-            el.style.position = 'absolute';
-            el.style.top = (item.rect.top + scrollTop) + 'px';
+            // Hide in all other viewports
+            el.style.display = 'none';
           }
-          */
+        } else if (item.isContactForm) {
+          // For the contact form that should appear in certain sections
+          // Check if we're in the section where the form should appear
+          if (scrollTop >= viewportHeight) {
+            // After the first viewport, the form should be visible
+            // We'll place it in its original position relative to the viewport
+            el.style.display = item.originalStyles.display;
+            el.style.visibility = item.originalStyles.visibility;
+  
+            // Make sure it stays on the right side
+            el.style.position = 'absolute';
+            el.style.right = item.originalStyles.right || '0px';
+            el.style.top = (item.rect.top + scrollTop) + 'px';
+          } else {
+            // In the first viewport, the form should not be visible
+            // (assuming it doesn't appear at the top of the page)
+            el.style.display = 'none';
+          }
+        } else {
+          // For other fixed elements, just hide them after first viewport
+          if (scrollTop >= viewportHeight) {
+            el.style.display = 'none';
+          }
         }
       });
     }
@@ -116,9 +190,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       fixedElementsStore.forEach(item => {
         const el = item.element;
         Object.assign(el.style, item.originalStyles);
-        if (el.dataset.captureAsFixed) {
-          delete el.dataset.captureAsFixed;
-        }
       });
     }
   
@@ -153,33 +224,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           document.documentElement.offsetHeight
         )
       };
-    }
-  
-    // Specifically for squareyards.com - directly target their fixed header
-    function handleSquareYardsSpecific(isFirstViewport) {
-      // Try to get the main navigation/header by common selectors
-      const possibleHeaders = [
-        document.querySelector('.navbar-fixed'),
-        document.querySelector('header'),
-        document.querySelector('.header'),
-        document.querySelector('#header'),
-        document.querySelector('.header-container'),
-        document.querySelector('.navigation'),
-        document.querySelector('.nav-wrapper'),
-        // Add more possible selectors here
-      ].filter(Boolean); // Remove null/undefined elements
-  
-      if (possibleHeaders.length) {
-        possibleHeaders.forEach(header => {
-          if (isFirstViewport) {
-            // Let it show in first viewport
-            header.dataset.isMainHeader = 'true';
-          } else {
-            // Hide in all other viewports
-            header.style.display = 'none';
-          }
-        });
-      }
     }
   
     // Prevent scrolling during capture
@@ -233,8 +277,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         console.log(`Capturing ${numHorizontalScreenshots}x${numVerticalScreenshots} grid`);
   
         // Capture the entire page by scrolling both horizontally and vertically
-        let isFirstCapture = true;
-  
         for (let y = 0; y < numVerticalScreenshots; y++) {
           for (let x = 0; x < numHorizontalScreenshots; x++) {
             // Scroll to position
@@ -246,16 +288,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             // Wait for the page to render after scrolling
             await new Promise(resolve => setTimeout(resolve, 500)); // Increased timeout
   
-            // Handle fixed elements differently for first viewport vs. others
-            handleFixedElementsForViewport(isFirstCapture, scrollTop);
-  
-            // Also try direct targeting for Square Yards website
-            handleSquareYardsSpecific(isFirstCapture);
-  
-            // After first capture, we won't want fixed elements anymore
-            if (isFirstCapture) {
-              isFirstCapture = false;
-            }
+            // Handle fixed elements for this viewport
+            handleFixedElementsForViewport(scrollTop, viewportHeight);
   
             // Capture and draw current viewport
             const img = await captureViewport();
