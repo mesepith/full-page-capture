@@ -30,6 +30,9 @@ async function captureFullPage() {
 }
 
 async function performFullPageCapture() {
+  // Send initial status
+  chrome.runtime.sendMessage({ action: "updateStatus", status: "Preparing to capture..." });
+
   // Store the original page state
   const originalScroll = { x: window.scrollX, y: window.scrollY };
   const originalOverflowBody = document.body.style.overflow;
@@ -111,6 +114,9 @@ async function performFullPageCapture() {
   // Main capture function
   async function captureFullPage() {
     try {
+      // Notify that content loading is starting
+      chrome.runtime.sendMessage({ action: "updateStatus", status: "Loading content..." });
+
       // Scroll to the bottom to load dynamic content
       window.scrollTo(0, document.body.scrollHeight);
       await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for content to load
@@ -122,6 +128,9 @@ async function performFullPageCapture() {
       // Scroll back to the top to start capturing
       window.scrollTo(0, 0);
       await new Promise((resolve) => setTimeout(resolve, 500)); // Brief wait to settle
+
+      // Notify that capturing is starting
+      chrome.runtime.sendMessage({ action: "startCapturing" });
 
       // Set up the canvas for stitching
       const canvas = document.createElement("canvas");
@@ -180,8 +189,9 @@ async function performFullPageCapture() {
         }
       }
 
-      // Convert the canvas to a data URL and trigger download
+      // Convert the canvas to a data URL and notify completion
       const finalDataUrl = canvas.toDataURL("image/png", 1.0);
+      chrome.runtime.sendMessage({ action: "captureComplete" });
       chrome.runtime.sendMessage({
         action: "downloadScreenshot",
         dataUrl: finalDataUrl,
