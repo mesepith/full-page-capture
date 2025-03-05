@@ -19,6 +19,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
     return true;
   }
+
+  // New handler for opening the screenshot in a new tab
+  if (request.action === "openScreenshot") {
+    // Store the data URL in chrome.storage.local
+    chrome.storage.local.set({ screenshotDataUrl: request.dataUrl }, () => {
+      // Create a new tab with screenshot.html
+      chrome.tabs.create({ url: chrome.runtime.getURL("screenshot.html") });
+    });
+  }
+  
 });
 
 async function captureFullPage() {
@@ -193,7 +203,7 @@ async function performFullPageCapture() {
       const finalDataUrl = canvas.toDataURL("image/png", 1.0);
       chrome.runtime.sendMessage({ action: "captureComplete" });
       chrome.runtime.sendMessage({
-        action: "downloadScreenshot",
+        action: "openScreenshot",
         dataUrl: finalDataUrl,
       });
     } catch (error) {

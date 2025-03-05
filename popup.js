@@ -35,7 +35,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (window.progressInterval) {
       clearInterval(window.progressInterval);
     }
-    statusEl.textContent = 'Screenshot saved!';
+    statusEl.textContent = 'Screenshot opened in new tab';
     setTimeout(() => {
       statusEl.textContent = '';
     }, 3000); // Clear status after 3 seconds
