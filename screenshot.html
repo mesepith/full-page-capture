@@ -8,10 +8,49 @@
       margin: 0;
       padding: 0;
       display: flex;
-      justify-content: center;
-      align-items: center;
+      flex-direction: column;
       min-height: 100vh;
       background-color: #f0f0f0;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      background-color: #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      border-bottom: 1px dotted #4285f4;
+    }
+    .logo-container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .logo {
+      height: 30px;
+      width: auto;
+    }
+    .button-group {
+      display: flex;
+      gap: 10px;
+    }
+    .button-group button {
+      padding: 8px 16px;
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .button-group button:hover {
+      background-color: #3367d6;
+    }
+    .content {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
     img {
       max-width: 100%;
@@ -21,7 +60,18 @@
   </style>
 </head>
 <body>
-  <img id="screenshotImage" alt="Full Page Screenshot">
-  <script src="screenshot.js"></script>
-</body>
+    <div class="header">
+      <div class="logo-container">
+        <img src="images/icon128.png" class="logo" alt="Logo">
+      </div>
+      <div class="button-group">
+        <button id="copyBtn">Copy</button>
+        <button id="downloadBtn">Download</button>
+      </div>
+    </div>
+    <div class="content">
+      <img id="screenshotImage" alt="Full Page Screenshot">
+    </div>
+    <script src="screenshot.js"></script>
+  </body>
 </html>
