@@ -326,29 +326,60 @@ function initDrawingManager() {
     // ───────────────────────────────────────────────────────────────────
     // UNDO / REDO
     // ───────────────────────────────────────────────────────────────────
-    undoBtn.addEventListener('click', () => {
-      if (shapes.length > 0) {
-        undoneShapes.push(shapes.pop());
-        selectedShapeIndex = -1;
-        redrawAll();
-      }
-    });
-  
-    redoBtn.addEventListener('click', () => {
-      if (undoneShapes.length > 0) {
-        shapes.push(undoneShapes.pop());
-        selectedShapeIndex = -1;
-        redrawAll();
-      }
-    });
+
+    undoBtn.addEventListener('click', undoAction);
+    redoBtn.addEventListener('click', redoAction);
+
+    // Helper functions for undo/redo
+    function undoAction() {
+        if (shapes.length > 0) {
+            undoneShapes.push(shapes.pop());
+            selectedShapeIndex = -1;
+            redrawAll();
+        }
+    }
+    
+    function redoAction() {
+
+        if (undoneShapes.length > 0) {
+            shapes.push(undoneShapes.pop());
+            selectedShapeIndex = -1;
+            redrawAll();
+        }
+    }
   
     // Keyboard for delete
     document.addEventListener('keydown', (e) => {
+
+       // 1) Handle shape deletion
       if (selectedShapeIndex !== -1 && (e.key === 'Delete' || e.key === 'Backspace')) {
         shapes.splice(selectedShapeIndex, 1);
         selectedShapeIndex = -1;
         redrawAll();
       }
+
+        // 2) Handle Undo/Redo
+        // Check if the user is holding Ctrl (Windows/Linux) or Cmd (Mac)
+        const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+        
+        // If user pressed Ctrl/Cmd + Z
+        if (isCtrlOrCmd && e.key.toLowerCase() === 'z') {
+            // Prevent the browser’s default "undo" (e.g. in a text field)
+            e.preventDefault();
+            
+            if (e.shiftKey) {
+            // Ctrl+Shift+Z or Cmd+Shift+Z => REDO
+            redoAction();
+            } else {
+            // Ctrl+Z or Cmd+Z => UNDO
+            undoAction();
+            }
+        }
+        // If user pressed Ctrl/Cmd + Y => also REDO
+        else if (isCtrlOrCmd && e.key.toLowerCase() === 'y') {
+            e.preventDefault();
+            redoAction();
+        }
     });
   
     // ───────────────────────────────────────────────────────────────────
