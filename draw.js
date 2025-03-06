@@ -77,34 +77,70 @@ function initDrawingManager() {
     });
   
     drawBtn.addEventListener('click', () => {
-      mode = 'line';
-      highlightButton(drawBtn);
-      closeAllTooltips();
-      showTooltipBelowButton(drawTooltip, drawBtn);
-      canvas.style.cursor = 'crosshair';
-      selectedShapeIndex = -1;
-      redrawAll();
+        if (drawTooltip.style.display === 'block') {
+          // Tooltip is already open, so close it and revert to Select mode
+          closeAllTooltips();
+          highlightButton(selectBtn);
+          mode = 'select';
+          canvas.style.cursor = 'pointer';
+          selectedShapeIndex = -1;
+          redrawAll();
+        } else {
+          // Tooltip is closed; open it
+          mode = 'line';
+          highlightButton(drawBtn);
+          closeAllTooltips();
+          showTooltipBelowButton(drawTooltip, drawBtn);
+          canvas.style.cursor = 'crosshair';
+          selectedShapeIndex = -1;
+          redrawAll();
+        }
     });
+      
   
     drawShapeBtn.addEventListener('click', () => {
-      mode = 'shape';
-      highlightButton(drawShapeBtn);
-      closeAllTooltips();
-      showTooltipBelowButton(shapeTooltip, drawShapeBtn);
-      canvas.style.cursor = 'crosshair';
-      selectedShapeIndex = -1;
-      redrawAll();
+        if (shapeTooltip.style.display === 'block') {
+          // Close it
+          closeAllTooltips();
+          highlightButton(selectBtn);
+          mode = 'select';
+          canvas.style.cursor = 'pointer';
+          selectedShapeIndex = -1;
+          redrawAll();
+        } else {
+          // Open it
+          mode = 'shape';
+          highlightButton(drawShapeBtn);
+          closeAllTooltips();
+          showTooltipBelowButton(shapeTooltip, drawShapeBtn);
+          canvas.style.cursor = 'crosshair';
+          selectedShapeIndex = -1;
+          redrawAll();
+        }
     });
+      
   
     drawTextBtn.addEventListener('click', () => {
-      mode = 'textWait';
-      highlightButton(drawTextBtn);
-      closeAllTooltips();
-      showTooltipBelowButton(textTooltip, drawTextBtn);
-      canvas.style.cursor = 'crosshair';
-      selectedShapeIndex = -1;
-      redrawAll();
+        if (textTooltip.style.display === 'block') {
+          // Close it
+          closeAllTooltips();
+          highlightButton(selectBtn);
+          mode = 'select';
+          canvas.style.cursor = 'pointer';
+          selectedShapeIndex = -1;
+          redrawAll();
+        } else {
+          // Open it
+          mode = 'textWait'; 
+          highlightButton(drawTextBtn);
+          closeAllTooltips();
+          showTooltipBelowButton(textTooltip, drawTextBtn);
+          canvas.style.cursor = 'crosshair';
+          selectedShapeIndex = -1;
+          redrawAll();
+        }
     });
+      
   
     function highlightButton(btn) {
       [selectBtn, drawBtn, drawShapeBtn, drawTextBtn].forEach(b => {
