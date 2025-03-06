@@ -50,7 +50,7 @@
     .button-group button:hover {
       background-color: #3367d6;
     }
-    /* The "active" style that indicates the user is currently in draw mode */
+    /* The "active" style that indicates the user is currently in a particular draw mode */
     .active-mode-button {
       background-color: #d9534f !important;  
       border: 2px solid #fff !important; 
@@ -86,10 +86,10 @@
       left: 0;
     }
 
-    /* Tooltip for drawing options */
+    /* Re-usable tooltip styling */
     .tooltip {
       position: absolute;
-      top: 50px; /* Just below the "Add Line" button */
+      top: 50px;
       right: 0;
       background-color: #fff;
       border: 1px solid #ccc;
@@ -112,6 +112,9 @@
       font-weight: bold;
       cursor: pointer;
       background-color: #4285f4;
+      color: white;
+      padding: 4px 6px;
+      border-radius: 4px;
     }
     .tooltip-options {
       display: flex;
@@ -155,15 +158,16 @@
       <span id="loading" class="loading">Loading...</span>
       <button id="downloadBtn">Download</button>
 
-      <!-- Add Undo/Redo in the header -->
       <button id="undoBtn">Undo</button>
       <button id="redoBtn">Redo</button>
 
-      <!-- Two-mode approach: Select or Draw -->
       <button id="selectBtn">Select</button>
       <button id="drawBtn">Add Line</button>
+      
+      <!-- NEW: A separate button for drawing shapes -->
+      <button id="drawShapeBtn">Draw Shape</button>
 
-      <!-- Tooltip that appears for drawing options -->
+      <!-- Tooltip for "Add Line" options -->
       <div id="drawTooltip" class="tooltip">
         <div class="tooltip-header">
           <span>Draw Options</span>
@@ -187,18 +191,44 @@
           </label>
         </div>
       </div>
+
+      <!-- NEW: Tooltip for "Draw Shape" options -->
+      <div id="shapeTooltip" class="tooltip">
+        <div class="tooltip-header">
+          <span>Shape Options</span>
+          <button class="close-btn" id="closeShapeTooltipBtn">&#x25B2;</button>
+        </div>
+        <div class="tooltip-options">
+          <label>
+            Shape:
+            <select id="shapeSelect2">
+              <option value="circle">Circle</option>
+              <option value="rect">Rectangle</option>
+            </select>
+          </label>
+          <label>
+            Color:
+            <input type="color" id="shapeColorPicker" value="#008000" />
+          </label>
+          <label>
+            Size:
+            <input type="range" id="shapeSizeRange" min="1" max="20" value="3" />
+          </label>
+        </div>
+      </div>
+
     </div>
   </div>
 
   <div class="content">
-    <!-- Wrapper to hold the image and an overlaid canvas -->
+    <!-- Wrapper for the screenshot and overlaid canvas -->
     <div class="image-container" id="imageContainer">
       <img id="screenshotImage" src="images/icon128.png" alt="Full Page Screenshot">
       <canvas id="drawingCanvas"></canvas>
     </div>
   </div>
 
-  <!-- Added success message div -->
+  <!-- The success message popup -->
   <div id="successMessage" class="success-message" role="alert"></div>
 
   <script src="screenshot.js"></script>
