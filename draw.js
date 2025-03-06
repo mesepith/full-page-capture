@@ -80,11 +80,6 @@ function initDrawingManager() {
         if (drawTooltip.style.display === 'block') {
           // Tooltip is already open, so close it and revert to Select mode
           closeAllTooltips();
-          highlightButton(selectBtn);
-          mode = 'select';
-          canvas.style.cursor = 'pointer';
-          selectedShapeIndex = -1;
-          redrawAll();
         } else {
           // Tooltip is closed; open it
           mode = 'line';
@@ -102,11 +97,6 @@ function initDrawingManager() {
         if (shapeTooltip.style.display === 'block') {
           // Close it
           closeAllTooltips();
-          highlightButton(selectBtn);
-          mode = 'select';
-          canvas.style.cursor = 'pointer';
-          selectedShapeIndex = -1;
-          redrawAll();
         } else {
           // Open it
           mode = 'shape';
@@ -124,11 +114,6 @@ function initDrawingManager() {
         if (textTooltip.style.display === 'block') {
           // Close it
           closeAllTooltips();
-          highlightButton(selectBtn);
-          mode = 'select';
-          canvas.style.cursor = 'pointer';
-          selectedShapeIndex = -1;
-          redrawAll();
         } else {
           // Open it
           mode = 'textWait'; 
