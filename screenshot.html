@@ -5,56 +5,25 @@
   <title>Screenshot</title>
   <style>
     body {
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
+      margin: 0; padding: 0;
+      display: flex; flex-direction: column;
       min-height: 100vh;
       background-color: #f0f0f0;
     }
     .header {
-      display: flex;
-      align-items: center;
+      display: flex; align-items: center;
       padding: 10px;
       background-color: #fff;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       border-bottom: 1px dotted #4285f4;
-      position: relative; /* for tooltip absolute position */
-    }
-    .logo-container {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    .logo {
-      height: 30px;
-      width: auto;
-    }
-    .button-group {
-      display: flex;
-      gap: 10px;
-      align-items: center;
       position: relative;
     }
-    .button-group button {
-      padding: 8px 16px;
-      background-color: #4285f4;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background-color 0.3s;
+    .logo-container {
+      flex: 1; display: flex;
+      justify-content: center; align-items: center;
     }
-    .button-group button:hover {
-      background-color: #3367d6;
-    }
-    /* The "active" style that indicates the user is currently in a particular draw mode */
-    .active-mode-button {
-      background-color: #d9534f !important;  
-      border: 2px solid #fff !important; 
-      box-shadow: 0 0 8px rgba(217,83,79,0.5);
+    .logo {
+      height: 30px; width: auto;
     }
     .loading {
       display: none;
@@ -62,89 +31,70 @@
       color: #4285f4;
       font-weight: bold;
     }
-    .content {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      position: relative; /* so the canvas can be absolute */
+    .button-group {
+      display: flex; gap: 10px; align-items: center;
+      position: relative;
     }
-    /* The screenshot image */
+    .button-group button {
+      padding: 8px 16px;
+      background-color: #4285f4; color: white;
+      border: none; border-radius: 4px;
+      cursor: pointer; font-weight: bold;
+      transition: background-color 0.3s;
+    }
+    .button-group button:hover {
+      background-color: #3367d6;
+    }
+    .active-mode-button {
+      background-color: #d9534f !important;
+      border: 2px solid #fff !important;
+      box-shadow: 0 0 8px rgba(217,83,79,0.5);
+    }
+    .content {
+      flex: 1; display: flex;
+      justify-content: center; align-items: center;
+      position: relative;
+    }
     #screenshotImage {
       max-width: 100%;
-      height: auto;
       display: block;
     }
     .image-container {
-      position: relative;
-      display: inline-block;
+      position: relative; display: inline-block;
     }
-    /* Canvas on top of the screenshot */
     #drawingCanvas {
-      position: absolute;
-      top: 0;
-      left: 0;
+      position: absolute; top: 0; left: 0;
     }
 
-    /* Re-usable tooltip styling */
+    /* Basic tooltip style */
     .tooltip {
-      position: absolute;
-      top: 50px;
-      right: 0;
-      background-color: #fff;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      padding: 8px;
+      position: absolute; top: 50px; right: 0;
+      background-color: #fff; border: 1px solid #ccc;
+      border-radius: 4px; padding: 8px;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-      display: none;
-      z-index: 999;
-      width: 180px;
+      display: none; z-index: 999; width: 200px;
     }
     .tooltip-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 6px;
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 6px;
     }
     .tooltip-header .close-btn {
-      background: none;
-      border: none;
-      font-weight: bold;
-      cursor: pointer;
-      background-color: #4285f4;
-      color: white;
-      padding: 4px 6px;
-      border-radius: 4px;
+      background: none; border: none; font-weight: bold;
+      cursor: pointer; background-color: #4285f4; color: white;
+      padding: 4px 6px; border-radius: 4px;
     }
     .tooltip-options {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+      display: flex; flex-direction: column; gap: 6px;
     }
     .tooltip-options label {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 14px;
+      display: flex; justify-content: space-between;
+      align-items: center; font-size: 14px;
     }
-    .tooltip-options input[type="color"],
-    .tooltip-options input[type="range"] {
+    .tooltip-options input, .tooltip-options select, .tooltip-options textarea {
       margin-left: 6px;
     }
-
-    /* New styling for the success message */
-    .success-message {
-      position: fixed;
-      top: 20%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background-color: rgba(66, 244, 113, 0.9);
-      color: rgb(0, 0, 0);
-      font-weight: bolder;
-      padding: 20px;
-      border-radius: 5px;
-      display: none;
-      z-index: 1000;
+    textarea {
+      width: 100%; box-sizing: border-box; resize: vertical;
     }
   </style>
 </head>
@@ -158,78 +108,105 @@
       <span id="loading" class="loading">Loading...</span>
       <button id="downloadBtn">Download</button>
 
-      <button id="undoBtn">Undo</button>
-      <button id="redoBtn">Redo</button>
-
       <button id="selectBtn">Select</button>
       <button id="drawBtn">Add Line</button>
-      
-      <!-- NEW: A separate button for drawing shapes -->
       <button id="drawShapeBtn">Draw Shape</button>
+      <!-- New: Add Text -->
+      <button id="drawTextBtn">Add Text</button>
 
-      <!-- Tooltip for "Add Line" options -->
-      <div id="drawTooltip" class="tooltip">
-        <div class="tooltip-header">
-          <span>Draw Options</span>
-          <button class="close-btn" id="closeTooltipBtn">&#x25B2;</button>
-        </div>
-        <div class="tooltip-options">
-          <label>
-            Shape:
-            <select id="shapeSelect">
-              <option value="arrow">Arrow</option>
-              <option value="line">Line</option>
-            </select>
-          </label>
-          <label>
-            Color:
-            <input type="color" id="colorPicker" value="#FF0000" />
-          </label>
-          <label>
-            Size:
-            <input type="range" id="sizeRange" min="1" max="20" value="3" />
-          </label>
-        </div>
-      </div>
-
-      <!-- NEW: Tooltip for "Draw Shape" options -->
-      <div id="shapeTooltip" class="tooltip">
-        <div class="tooltip-header">
-          <span>Shape Options</span>
-          <button class="close-btn" id="closeShapeTooltipBtn">&#x25B2;</button>
-        </div>
-        <div class="tooltip-options">
-          <label>
-            Shape:
-            <select id="shapeSelect2">
-              <option value="circle">Circle</option>
-              <option value="rect">Rectangle</option>
-            </select>
-          </label>
-          <label>
-            Color:
-            <input type="color" id="shapeColorPicker" value="#008000" />
-          </label>
-          <label>
-            Size:
-            <input type="range" id="shapeSizeRange" min="1" max="20" value="3" />
-          </label>
-        </div>
-      </div>
-
+      <!-- Some other features like Undo/Redo, Copy, Download if you want... -->
+      <button id="undoBtn">Undo</button>
+      <button id="redoBtn">Redo</button>
     </div>
   </div>
 
   <div class="content">
-    <!-- Wrapper for the screenshot and overlaid canvas -->
     <div class="image-container" id="imageContainer">
-      <img id="screenshotImage" src="images/icon128.png" alt="Full Page Screenshot">
+      <img id="screenshotImage" src="images/icon128.png" alt="Screenshot">
       <canvas id="drawingCanvas"></canvas>
     </div>
   </div>
 
-  <!-- The success message popup -->
-  <div id="successMessage" class="success-message" role="alert"></div>
+  <!-- Tooltip for lines/arrows (optional) -->
+  <div id="drawTooltip" class="tooltip">
+    <div class="tooltip-header">
+      <span>Line Options</span>
+      <button class="close-btn" id="closeDrawTooltipBtn">&#x25B2;</button>
+    </div>
+    <div class="tooltip-options">
+      <label>
+        Shape:
+        <select id="lineShapeSelect">
+          <option value="arrow">Arrow</option>
+          <option value="line">Line</option>
+        </select>
+      </label>
+      <label>
+        Color:
+        <input type="color" id="lineColorPicker" value="#FF0000" />
+      </label>
+      <label>
+        Size:
+        <input type="range" id="lineSizeRange" min="1" max="20" value="3" />
+      </label>
+    </div>
+  </div>
+
+  <!-- Tooltip for circle/rect (optional) -->
+  <div id="shapeTooltip" class="tooltip">
+    <div class="tooltip-header">
+      <span>Shape Options</span>
+      <button class="close-btn" id="closeShapeTooltipBtn">&#x25B2;</button>
+    </div>
+    <div class="tooltip-options">
+      <label>
+        Shape:
+        <select id="shapeSelect2">
+          <option value="circle">Circle</option>
+          <option value="rect">Rectangle</option>
+        </select>
+      </label>
+      <label>
+        Color:
+        <input type="color" id="shapeColorPicker" value="#008000" />
+      </label>
+      <label>
+        Size:
+        <input type="range" id="shapeSizeRange" min="1" max="20" value="3" />
+      </label>
+    </div>
+  </div>
+
+  <!-- Tooltip for text -->
+  <div id="textTooltip" class="tooltip">
+    <div class="tooltip-header">
+      <span>Text Options</span>
+      <button class="close-btn" id="closeTextTooltipBtn">&#x25B2;</button>
+    </div>
+    <div class="tooltip-options">
+      <label>
+        Font:
+        <select id="textFontSelect">
+          <option value="Arial">Arial</option>
+          <option value="Times New Roman">Times New Roman</option>
+          <option value="Courier New">Courier New</option>
+        </select>
+      </label>
+      <label>
+        Color:
+        <input type="color" id="textColorPicker" value="#000000" />
+      </label>
+      <label>
+        Size:
+        <input type="range" id="textSizeRange" min="10" max="72" value="24" />
+      </label>
+      <label>
+        Text:
+        <textarea id="textContentArea" rows="3" placeholder="Your text..."></textarea>
+      </label>
+      <button id="applyTextBtn">Apply</button>
+    </div>
+  </div>
 
   <script src="screenshot.js"></script>
   <script src="draw.js"></script>

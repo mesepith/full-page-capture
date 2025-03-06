@@ -3,155 +3,215 @@ function initDrawingManager() {
     const ctx = canvas.getContext('2d');
   
     // Buttons
-    const undoBtn = document.getElementById('undoBtn');
-    const redoBtn = document.getElementById('redoBtn');
     const selectBtn = document.getElementById('selectBtn');
     const drawBtn = document.getElementById('drawBtn');
-  
-    // NEW: "Draw Shape" button
     const drawShapeBtn = document.getElementById('drawShapeBtn');
+    const drawTextBtn = document.getElementById('drawTextBtn');
+    const undoBtn = document.getElementById('undoBtn');
+    const redoBtn = document.getElementById('redoBtn');
   
-    // Tooltip for line/arrow
+    // Tooltips
     const drawTooltip = document.getElementById('drawTooltip');
-    const closeTooltipBtn = document.getElementById('closeTooltipBtn');
-    const shapeSelect = document.getElementById('shapeSelect');      // arrow/line
-    const colorPicker = document.getElementById('colorPicker');
-    const sizeRange = document.getElementById('sizeRange');
-  
-    // NEW: Tooltip for circle/rectangle
+    const closeDrawTooltipBtn = document.getElementById('closeDrawTooltipBtn');
     const shapeTooltip = document.getElementById('shapeTooltip');
     const closeShapeTooltipBtn = document.getElementById('closeShapeTooltipBtn');
-    const shapeSelect2 = document.getElementById('shapeSelect2');    // circle/rect
+    const textTooltip = document.getElementById('textTooltip');
+    const closeTextTooltipBtn = document.getElementById('closeTextTooltipBtn');
+  
+    // Controls for lines
+    const lineShapeSelect = document.getElementById('lineShapeSelect');
+    const lineColorPicker = document.getElementById('lineColorPicker');
+    const lineSizeRange = document.getElementById('lineSizeRange');
+  
+    // Controls for shapes
+    const shapeSelect2 = document.getElementById('shapeSelect2');
     const shapeColorPicker = document.getElementById('shapeColorPicker');
     const shapeSizeRange = document.getElementById('shapeSizeRange');
   
-    // State arrays
+    // Controls for text
+    const textFontSelect = document.getElementById('textFontSelect');
+    const textColorPicker = document.getElementById('textColorPicker');
+    const textSizeRange = document.getElementById('textSizeRange');
+    const textContentArea = document.getElementById('textContentArea');
+    const applyTextBtn = document.getElementById('applyTextBtn');
+  
+    // States
     let shapes = [];
     let undoneShapes = [];
-  
-    // Selected shape index
     let selectedShapeIndex = -1;
   
-    // Are we currently drawing?
     let isDrawing = false;
     let startX = 0;
     let startY = 0;
   
-    // Possible modes: "draw" (arrow/line), "drawShape" (circle/rect), or "select"
-    let mode = "draw"; // default
+    // pendingText: if not null, means user typed text in the tooltip
+    // and pressed "Apply," so we are waiting for a canvas click to place it
+    let pendingText = null;
   
-    // Initial cursor
-    canvas.style.cursor = 'crosshair';
+    // mode can be "select", "line", "shape", "text"
+    let mode = "select";
   
-    // ─────────────────────────────────────────────────────────────────────────
-    // MODE SWITCHING FOR LINE/ARROW
-    // ─────────────────────────────────────────────────────────────────────────
+    canvas.style.cursor = 'pointer'; // default to select
   
-    // "Add Line" → go to draw mode (arrow/line), toggle the line/arrow tooltip
-    drawBtn.addEventListener('click', () => {
-      mode = 'draw';
-  
-      // highlight "Add Line" button, unhighlight others
-      drawBtn.classList.add('active-mode-button');
-      drawShapeBtn.classList.remove('active-mode-button');
-      selectBtn.classList.remove('active-mode-button');
-  
-      selectedShapeIndex = -1;
-      canvas.style.cursor = 'crosshair';
-  
-      // Toggle line/arrow tooltip
-      if (drawTooltip.style.display === 'block') {
-        drawTooltip.style.display = 'none';
-      } else {
-        drawTooltip.style.display = 'block';
-        shapeTooltip.style.display = 'none'; // hide shape tooltip if open
-      }
-      redrawAll();
-    });
-  
-    closeTooltipBtn.addEventListener('click', () => {
-      drawTooltip.style.display = 'none';
-    });
-  
-    // ─────────────────────────────────────────────────────────────────────────
-    // NEW: MODE SWITCHING FOR CIRCLE/RECT
-    // ─────────────────────────────────────────────────────────────────────────
-  
-    drawShapeBtn.addEventListener('click', () => {
-      mode = 'drawShape';
-  
-      // highlight the "Draw Shape" button, unhighlight others
-      drawShapeBtn.classList.add('active-mode-button');
-      drawBtn.classList.remove('active-mode-button');
-      selectBtn.classList.remove('active-mode-button');
-  
-      selectedShapeIndex = -1;
-      canvas.style.cursor = 'crosshair';
-  
-      // Toggle the shape tooltip
-      if (shapeTooltip.style.display === 'block') {
-        shapeTooltip.style.display = 'none';
-      } else {
-        shapeTooltip.style.display = 'block';
-        drawTooltip.style.display = 'none'; // hide line/arrow tooltip if open
-      }
-      redrawAll();
-    });
-  
-    closeShapeTooltipBtn.addEventListener('click', () => {
-      shapeTooltip.style.display = 'none';
-    });
-  
-    // ─────────────────────────────────────────────────────────────────────────
-    // "Select" button → select mode
-    // ─────────────────────────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────
+    // MODE SWITCHING
+    // ───────────────────────────────────────────────────────────────────
   
     selectBtn.addEventListener('click', () => {
       mode = 'select';
-  
-      // highlight the select button
-      selectBtn.classList.add('active-mode-button');
-      drawBtn.classList.remove('active-mode-button');
-      drawShapeBtn.classList.remove('active-mode-button');
-  
+      highlightButton(selectBtn);
+      closeAllTooltips();
       selectedShapeIndex = -1;
-      drawTooltip.style.display = 'none';
-      shapeTooltip.style.display = 'none';
       canvas.style.cursor = 'pointer';
       redrawAll();
     });
   
-    // ─────────────────────────────────────────────────────────────────────────
+    drawBtn.addEventListener('click', () => {
+      mode = 'line';
+      highlightButton(drawBtn);
+      closeAllTooltips();
+      drawTooltip.style.display = 'block';
+      // for a nicer cursor:
+      canvas.style.cursor = 'crosshair';
+      selectedShapeIndex = -1;
+      redrawAll();
+    });
+  
+    drawShapeBtn.addEventListener('click', () => {
+      mode = 'shape';
+      highlightButton(drawShapeBtn);
+      closeAllTooltips();
+      shapeTooltip.style.display = 'block';
+      canvas.style.cursor = 'crosshair';
+      selectedShapeIndex = -1;
+      redrawAll();
+    });
+  
+    drawTextBtn.addEventListener('click', () => {
+      mode = 'textWait'; 
+      // "textWait" means we haven't yet pressed "Apply" with text. 
+      // We'll show the tooltip for text.
+      highlightButton(drawTextBtn);
+      closeAllTooltips();
+      textTooltip.style.display = 'block';
+      canvas.style.cursor = 'crosshair';
+      selectedShapeIndex = -1;
+      redrawAll();
+    });
+  
+    function highlightButton(btn) {
+      [selectBtn, drawBtn, drawShapeBtn, drawTextBtn].forEach(b => {
+        b.classList.remove('active-mode-button');
+      });
+      btn.classList.add('active-mode-button');
+    }
+  
+    function closeAllTooltips() {
+      drawTooltip.style.display = 'none';
+      shapeTooltip.style.display = 'none';
+      textTooltip.style.display = 'none';
+    }
+  
+    // Close tooltips individually
+    closeDrawTooltipBtn.addEventListener('click', () => {
+      drawTooltip.style.display = 'none';
+    });
+    closeShapeTooltipBtn.addEventListener('click', () => {
+      shapeTooltip.style.display = 'none';
+    });
+    closeTextTooltipBtn.addEventListener('click', () => {
+      textTooltip.style.display = 'none';
+    });
+  
+    // ───────────────────────────────────────────────────────────────────
+    // TEXT: When user clicks "Apply," we store text info in pendingText
+    // Then on next canvas click, we place it.
+    // ───────────────────────────────────────────────────────────────────
+  
+    applyTextBtn.addEventListener('click', () => {
+      const txt = textContentArea.value.trim();
+      if (txt) {
+        // user typed something
+        pendingText = {
+          text: txt,
+          font: textFontSelect.value,
+          color: textColorPicker.value,
+          size: parseInt(textSizeRange.value, 10)
+        };
+        // Now we set mode so next click on canvas places text
+        mode = 'text';
+        // optionally clear the text tooltip
+        textTooltip.style.display = 'none';
+        // reset the textContentArea
+        // textContentArea.value = "";
+      } else {
+        // no text => do nothing
+        pendingText = null;
+      }
+    });
+  
+    // ───────────────────────────────────────────────────────────────────
     // CANVAS EVENTS
-    // ─────────────────────────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────
   
     canvas.addEventListener('mousedown', (e) => {
       const rect = canvas.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
       const clickY = e.clientY - rect.top;
   
+      // If "select" mode, check for shape under click
       if (mode === 'select') {
-        // Try to find a shape under the click
-        const foundIndex = findTopShapeAt(shapes, clickX, clickY);
+        const foundIndex = findTopShape(shapes, clickX, clickY);
         selectedShapeIndex = foundIndex;
         redrawAll();
         return;
       }
   
-      // If in "draw" or "drawShape" mode, check if user clicked an existing shape
-      const foundIndex = findTopShapeAt(shapes, clickX, clickY);
+      // If there's a shape under click in any other mode, switch to select
+      const foundIndex = findTopShape(shapes, clickX, clickY);
       if (foundIndex !== -1) {
-        // They clicked an existing shape → automatically switch to SELECT mode
         mode = 'select';
+        highlightButton(selectBtn);
         selectedShapeIndex = foundIndex;
-        isDrawing = false;
         canvas.style.cursor = 'pointer';
-        drawTooltip.style.display = 'none';
-        shapeTooltip.style.display = 'none';
+        closeAllTooltips();
         redrawAll();
-      } else {
-        // They clicked empty space → start drawing a new shape
-        selectedShapeIndex = -1;
+        return;
+      }
+  
+      // If mode === 'text' and we have pendingText,
+      // let's place that text right away
+      if (mode === 'text' && pendingText) {
+        const newShape = {
+          type: 'text',
+          text: pendingText.text,
+          font: pendingText.font,
+          color: pendingText.color,
+          size: pendingText.size,
+          x1: clickX,
+          y1: clickY
+        };
+        shapes.push(newShape);
+        undoneShapes = [];
+        pendingText = null; // used up
+        // remain in "text" mode or revert to "select"? 
+        // Let's revert to "select" to avoid multiple text placements
+        mode = 'select';
+        highlightButton(selectBtn);
+        canvas.style.cursor = 'pointer';
+        redrawAll();
+        return;
+      }
+  
+      // If mode === 'textWait', user hasn't pressed "Apply" in the text tooltip
+      // so we do nothing yet
+      if (mode === 'textWait') {
+        // do nothing
+        return;
+      }
+  
+      // If "line" or "shape"
+      if (mode === 'line' || mode === 'shape') {
         isDrawing = true;
         startX = clickX;
         startY = clickY;
@@ -160,32 +220,31 @@ function initDrawingManager() {
   
     canvas.addEventListener('mousemove', (e) => {
       if (!isDrawing) return;
-      if (mode !== 'draw' && mode !== 'drawShape') return;
+      if (mode !== 'line' && mode !== 'shape') return;
   
-      // We are drawing, so let's do a live preview
+      // Live preview
       redrawAll();
   
       const rect = canvas.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
   
-      // Decide shape type depending on mode
-      let previewShape;
-      if (mode === 'draw') {
-        // line or arrow
-        previewShape = {
-          type: shapeSelect.value,        // 'arrow' or 'line'
-          color: colorPicker.value,
-          size: parseInt(sizeRange.value, 10),
+      let shapeObj;
+      if (mode === 'line') {
+        // arrow or line
+        shapeObj = {
+          type: lineShapeSelect.value, // 'arrow' or 'line'
+          color: lineColorPicker.value,
+          size: parseInt(lineSizeRange.value, 10),
           x1: startX,
           y1: startY,
           x2: mouseX,
           y2: mouseY
         };
-      } else {
-        // mode === 'drawShape' → circle or rect
-        previewShape = {
-          type: shapeSelect2.value,      // 'circle' or 'rect'
+      } else if (mode === 'shape') {
+        // circle or rect
+        shapeObj = {
+          type: shapeSelect2.value, // 'circle' or 'rect'
           color: shapeColorPicker.value,
           size: parseInt(shapeSizeRange.value, 10),
           x1: startX,
@@ -195,36 +254,32 @@ function initDrawingManager() {
         };
       }
   
-      drawShape(previewShape, false);
+      drawShape(shapeObj, false);
     });
   
     canvas.addEventListener('mouseup', (e) => {
       if (!isDrawing) return;
-      if (mode !== 'draw' && mode !== 'drawShape') return;
+      if (mode !== 'line' && mode !== 'shape') return;
   
       isDrawing = false;
-  
       const rect = canvas.getBoundingClientRect();
       const endX = e.clientX - rect.left;
       const endY = e.clientY - rect.top;
   
-      // Create a new shape object
-      let newShape;
-      if (mode === 'draw') {
-        // line or arrow
-        newShape = {
-          type: shapeSelect.value,
-          color: colorPicker.value,
-          size: parseInt(sizeRange.value, 10),
+      let shapeObj;
+      if (mode === 'line') {
+        shapeObj = {
+          type: lineShapeSelect.value, // arrow or line
+          color: lineColorPicker.value,
+          size: parseInt(lineSizeRange.value, 10),
           x1: startX,
           y1: startY,
           x2: endX,
           y2: endY
         };
       } else {
-        // mode === 'drawShape' → circle or rect
-        newShape = {
-          type: shapeSelect2.value,
+        shapeObj = {
+          type: shapeSelect2.value, // circle or rect
           color: shapeColorPicker.value,
           size: parseInt(shapeSizeRange.value, 10),
           x1: startX,
@@ -234,107 +289,86 @@ function initDrawingManager() {
         };
       }
   
-      shapes.push(newShape);
+      shapes.push(shapeObj);
       undoneShapes = [];
       redrawAll();
     });
   
-    // ─────────────────────────────────────────────────────────────────────────
-    // KEYBOARD: Delete, Undo, Redo
-    // ─────────────────────────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────
+    // UNDO / REDO
+    // ───────────────────────────────────────────────────────────────────
   
-    document.addEventListener('keydown', (e) => {
-      // Debug
-      console.log('Key pressed:', e.key, 'Mode:', mode, 'Index:', selectedShapeIndex);
-  
-      // Delete if shape is selected
-      if (selectedShapeIndex !== -1 && (e.key === 'Delete' || e.key === 'Backspace')) {
-        shapes.splice(selectedShapeIndex, 1);
-        selectedShapeIndex = -1;
-        redrawAll();
-      }
-  
-      // Ctrl+Z => Undo
-      if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === 'z') {
-        doUndo();
-      }
-      // Ctrl+Y => Redo
-      if (e.ctrlKey && e.key.toLowerCase() === 'y') {
-        doRedo();
-      }
-      // Ctrl+Shift+Z => Redo
-      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'z') {
-        doRedo();
-      }
-    });
-  
-    // Undo/Redo Buttons
-    undoBtn.addEventListener('click', () => doUndo());
-    redoBtn.addEventListener('click', () => doRedo());
-  
-    function doUndo() {
+    undoBtn.addEventListener('click', () => {
       if (shapes.length > 0) {
         undoneShapes.push(shapes.pop());
         selectedShapeIndex = -1;
         redrawAll();
       }
-    }
-    function doRedo() {
+    });
+    redoBtn.addEventListener('click', () => {
       if (undoneShapes.length > 0) {
         shapes.push(undoneShapes.pop());
         selectedShapeIndex = -1;
         redrawAll();
       }
-    }
+    });
   
-    // ─────────────────────────────────────────────────────────────────────────
-    // DRAWING UTILITIES
-    // ─────────────────────────────────────────────────────────────────────────
+    // Keyboard for delete
+    document.addEventListener('keydown', (e) => {
+      if (selectedShapeIndex !== -1 && (e.key === 'Delete' || e.key === 'Backspace')) {
+        shapes.splice(selectedShapeIndex, 1);
+        selectedShapeIndex = -1;
+        redrawAll();
+      }
+    });
   
-    /** Clears the canvas and draws all shapes, highlighting the selected one. */
+    // ───────────────────────────────────────────────────────────────────
+    // DRAWING HELPERS
+    // ───────────────────────────────────────────────────────────────────
+  
     function redrawAll() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
-      shapes.forEach((shape, index) => {
-        const isSelected = (index === selectedShapeIndex);
+      shapes.forEach((shape, idx) => {
+        const isSelected = (idx === selectedShapeIndex);
         drawShape(shape, isSelected);
       });
     }
   
-    /**
-     * Draw line, arrow, circle, or rectangle, depending on `shape.type`.
-     * If `isSelected` is true, draw a white outline first + highlight endpoints.
-     */
     function drawShape(shape, isSelected) {
-      const { type, color, size, x1, y1, x2, y2 } = shape;
+      // If selected, maybe draw outline first
+      if (isSelected) {
+        drawOutline(shape);
+      }
   
+      const { type } = shape;
+      if (type === 'line' || type === 'arrow' || type === 'circle' || type === 'rect') {
+        drawLineOrShape(shape);
+      }
+      else if (type === 'text') {
+        drawTextShape(shape);
+      }
+    }
+  
+    function drawLineOrShape(shape) {
+      const { type, color, size, x1, y1, x2, y2 } = shape;
       ctx.save();
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-  
-      // If selected, draw a thicker white outline behind the shape
-      if (isSelected) {
-        drawShapeOutline(type, x1, y1, x2, y2, size + 4);
-      }
-  
-      // Now draw the shape in its normal color
       ctx.strokeStyle = color;
       ctx.lineWidth = size;
   
       if (type === 'line') {
-        // simple line
         ctx.beginPath();
         ctx.moveTo(x1, y1);
         ctx.lineTo(x2, y2);
         ctx.stroke();
       }
       else if (type === 'arrow') {
-        // arrow line
+        // line
         ctx.beginPath();
         ctx.moveTo(x1, y1);
         ctx.lineTo(x2, y2);
         ctx.stroke();
-  
         // arrow head
         const angle = Math.atan2(y2 - y1, x2 - x1);
         const headLen = 10 + (size * 2);
@@ -354,176 +388,169 @@ function initDrawingManager() {
         ctx.fill();
       }
       else if (type === 'circle') {
-        // interpret (x1, y1) as one corner, (x2, y2) as opposite corner
-        // compute center, radius
-        const centerX = (x1 + x2) / 2;
-        const centerY = (y1 + y2) / 2;
-        const radiusX = Math.abs(x2 - x1) / 2;
-        const radiusY = Math.abs(y2 - y1) / 2;
-  
+        const cx = (x1 + x2) / 2;
+        const cy = (y1 + y2) / 2;
+        const rx = Math.abs(x2 - x1) / 2;
+        const ry = Math.abs(y2 - y1) / 2;
         ctx.beginPath();
-        // ellipse() can do circles of different widths/heights
-        ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, 2 * Math.PI);
+        ctx.ellipse(cx, cy, rx, ry, 0, 0, 2 * Math.PI);
         ctx.stroke();
       }
       else if (type === 'rect') {
-        // rectangular bounding box from (x1, y1) to (x2, y2)
         const left = Math.min(x1, x2);
         const top = Math.min(y1, y2);
-        const width = Math.abs(x2 - x1);
-        const height = Math.abs(y2 - y1);
-  
-        ctx.strokeRect(left, top, width, height);
-      }
-  
-      // If selected, draw endpoint circles
-      if (isSelected) {
-        ctx.fillStyle = 'blue';
-        ctx.beginPath();
-        ctx.arc(x1, y1, size + 2, 0, 2*Math.PI);
-        ctx.fill();
-  
-        ctx.beginPath();
-        ctx.arc(x2, y2, size + 2, 0, 2*Math.PI);
-        ctx.fill();
+        const w = Math.abs(x2 - x1);
+        const h = Math.abs(y2 - y1);
+        ctx.strokeRect(left, top, w, h);
       }
   
       ctx.restore();
     }
   
-    /**
-     * Draws a thick white outline behind line/arrow/circle/rect
-     */
-    function drawShapeOutline(type, x1, y1, x2, y2, outlineWidth) {
+    function drawTextShape(shape) {
+      const { text, font, color, size, x1, y1 } = shape;
       ctx.save();
-      ctx.strokeStyle = 'white';
-      ctx.lineWidth = outlineWidth;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-  
-      if (type === 'line') {
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.stroke();
-      }
-      else if (type === 'arrow') {
-        // main arrow line
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.stroke();
-  
-        // arrow head outline
-        const angle = Math.atan2(y2 - y1, x2 - x1);
-        const headLen = 10 + (outlineWidth * 2);
-        ctx.beginPath();
-        ctx.moveTo(x2, y2);
-        ctx.lineTo(
-          x2 - headLen * Math.cos(angle - Math.PI / 6),
-          y2 - headLen * Math.sin(angle - Math.PI / 6)
-        );
-        ctx.lineTo(
-          x2 - headLen * Math.cos(angle + Math.PI / 6),
-          y2 - headLen * Math.sin(angle + Math.PI / 6)
-        );
-        ctx.lineTo(x2, y2);
-        ctx.closePath();
-        ctx.stroke();
-      }
-      else if (type === 'circle') {
-        const centerX = (x1 + x2) / 2;
-        const centerY = (y1 + y2) / 2;
-        const radiusX = Math.abs(x2 - x1) / 2;
-        const radiusY = Math.abs(y2 - y1) / 2;
-  
-        ctx.beginPath();
-        ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, 2 * Math.PI);
-        ctx.stroke();
-      }
-      else if (type === 'rect') {
-        const left = Math.min(x1, x2);
-        const top = Math.min(y1, y2);
-        const width = Math.abs(x2 - x1);
-        const height = Math.abs(y2 - y1);
-  
-        ctx.strokeRect(left, top, width, height);
-      }
+      ctx.font = `${size}px ${font}`;
+      ctx.fillStyle = color;
+      ctx.textBaseline = 'top';
+      ctx.fillText(text, x1, y1);
       ctx.restore();
     }
   
-    /**
-     * Finds the topmost shape at (x, y), or -1 if none is near.
-     */
-    function findTopShapeAt(list, x, y) {
+    function drawOutline(shape) {
+      // If text, we do a bounding box
+      if (shape.type === 'text') {
+        const { text, font, size, x1, y1 } = shape;
+        ctx.save();
+        ctx.font = `${size}px ${font}`;
+        const w = ctx.measureText(text).width;
+        const h = size;
+        ctx.fillStyle = 'white';
+        ctx.fillRect(x1 - 2, y1 - 2, w + 4, h + 4);
+        ctx.strokeStyle = 'orange';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x1 - 2, y1 - 2, w + 4, h + 4);
+        ctx.restore();
+      } else {
+        // line/arrow/circle/rect => bigger white stroke behind
+        // For simplicity, let's do a quick approach:
+        ctx.save();
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = (shape.size || 3) + 4;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+  
+        // draw the shape again
+        if (shape.type === 'line' || shape.type === 'arrow') {
+          ctx.beginPath();
+          ctx.moveTo(shape.x1, shape.y1);
+          ctx.lineTo(shape.x2, shape.y2);
+          ctx.stroke();
+          // arrow head if arrow
+          if (shape.type === 'arrow') {
+            const angle = Math.atan2(shape.y2 - shape.y1, shape.x2 - shape.x1);
+            const headLen = 10 + ((shape.size || 3) + 4) * 2;
+            ctx.beginPath();
+            ctx.moveTo(shape.x2, shape.y2);
+            ctx.lineTo(
+              shape.x2 - headLen * Math.cos(angle - Math.PI / 6),
+              shape.y2 - headLen * Math.sin(angle - Math.PI / 6)
+            );
+            ctx.lineTo(
+              shape.x2 - headLen * Math.cos(angle + Math.PI / 6),
+              shape.y2 - headLen * Math.sin(angle + Math.PI / 6)
+            );
+            ctx.lineTo(shape.x2, shape.y2);
+            ctx.closePath();
+            ctx.stroke();
+          }
+        }
+        else if (shape.type === 'circle') {
+          const cx = (shape.x1 + shape.x2) / 2;
+          const cy = (shape.y1 + shape.y2) / 2;
+          const rx = Math.abs(shape.x2 - shape.x1) / 2;
+          const ry = Math.abs(shape.y2 - shape.y1) / 2;
+          ctx.beginPath();
+          ctx.ellipse(cx, cy, rx, ry, 0, 0, 2 * Math.PI);
+          ctx.stroke();
+        }
+        else if (shape.type === 'rect') {
+          const left = Math.min(shape.x1, shape.x2);
+          const top = Math.min(shape.y1, shape.y2);
+          const w = Math.abs(shape.x2 - shape.x1);
+          const h = Math.abs(shape.y2 - shape.y1);
+          ctx.strokeRect(left, top, w, h);
+        }
+  
+        ctx.restore();
+      }
+    }
+  
+    // ───────────────────────────────────────────────────────────────────
+    // HIT TEST
+    // ───────────────────────────────────────────────────────────────────
+    function findTopShape(list, px, py) {
       for (let i = list.length - 1; i >= 0; i--) {
-        if (isPointOnShape(list[i], x, y)) {
+        if (hitTestShape(list[i], px, py)) {
           return i;
         }
       }
       return -1;
     }
   
-    /**
-     * Returns true if (px,py) is close enough to shape's line or boundary.
-     * Here we do the same line-distance check for lines and arrows.
-     * For rect/circle, we do a simpler bounding box or shape-based check.
-     * 
-     * The code below just does the line check. 
-     * You might want to expand it for circle/rect if you want better selection
-     * logic for those shapes.
-     */
-    function isPointOnShape(shape, px, py) {
+    function hitTestShape(shape, px, py) {
+      if (shape.type === 'text') {
+        return hitTestText(shape, px, py);
+      } else {
+        return hitTestLineOrShape(shape, px, py);
+      }
+    }
+  
+    function hitTestText(shape, px, py) {
+      const { text, font, size, x1, y1 } = shape;
+      ctx.save();
+      ctx.font = `${size}px ${font}`;
+      const w = ctx.measureText(text).width;
+      const h = size;
+      ctx.restore();
+  
+      return (px >= x1 && px <= x1 + w && py >= y1 && py <= y1 + h);
+    }
+  
+    function hitTestLineOrShape(shape, px, py) {
       const threshold = 10;
-      const { x1, y1, x2, y2, type } = shape;
+      const { type, x1, y1, x2, y2 } = shape;
   
       if (type === 'line' || type === 'arrow') {
-        // Distance from point to line segment
+        // distance from point to line
         const A = px - x1;
         const B = py - y1;
         const C = x2 - x1;
         const D = y2 - y1;
-  
-        const dot = A * C + B * D;
-        const lenSq = C * C + D * D;
+        const dot = A*C + B*D;
+        const lenSq = C*C + D*D;
         let param = -1;
         if (lenSq !== 0) {
           param = dot / lenSq;
         }
-  
         let xx, yy;
         if (param < 0) {
-          xx = x1;
-          yy = y1;
+          xx = x1; yy = y1;
         } else if (param > 1) {
-          xx = x2;
-          yy = y2;
+          xx = x2; yy = y2;
         } else {
-          xx = x1 + param * C;
-          yy = y1 + param * D;
+          xx = x1 + param*C;
+          yy = y1 + param*D;
         }
-  
-        const dist = Math.sqrt((px - xx) ** 2 + (py - yy) ** 2);
+        const dist = Math.sqrt((px - xx)**2 + (py - yy)**2);
         return dist < threshold;
       }
-      else if (type === 'circle') {
-        // quick bounding box check
+      else if (type === 'circle' || type === 'rect') {
+        // bounding box check
         const left = Math.min(x1, x2);
         const right = Math.max(x1, x2);
         const top = Math.min(y1, y2);
         const bottom = Math.max(y1, y2);
-        if (px < left - threshold || px > right + threshold) return false;
-        if (py < top - threshold || py > bottom + threshold) return false;
-        // optionally do a more precise ellipse check
-        return true;
-      }
-      else if (type === 'rect') {
-        // bounding box
-        const left = Math.min(x1, x2);
-        const right = Math.max(x1, x2);
-        const top = Math.min(y1, y2);
-        const bottom = Math.max(y1, y2);
-        // if user clicks within ~10px of bounding box
         if (
           px >= left - threshold && px <= right + threshold &&
           py >= top - threshold && py <= bottom + threshold
