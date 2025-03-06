@@ -40,6 +40,10 @@ function initDrawingManager() {
     // "Add Line" button → go to draw mode, toggle tooltip
     drawBtn.addEventListener('click', () => {
       mode = 'draw';
+        
+      drawBtn.classList.add('active-mode-button');
+      selectBtn.classList.remove('active-mode-button');
+
       selectedShapeIndex = -1;
       canvas.style.cursor = 'crosshair';
   
@@ -60,6 +64,10 @@ function initDrawingManager() {
     // "Select" button → go to select mode, hide tooltip
     selectBtn.addEventListener('click', () => {
       mode = 'select';
+
+      selectBtn.classList.add('active-mode-button');
+      drawBtn.classList.remove('active-mode-button');
+      
       selectedShapeIndex = -1;
       drawTooltip.style.display = 'none';
       canvas.style.cursor = 'pointer';

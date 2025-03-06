@@ -45,9 +45,16 @@
       border-radius: 4px;
       cursor: pointer;
       font-weight: bold;
+      transition: background-color 0.3s;
     }
     .button-group button:hover {
       background-color: #3367d6;
+    }
+    /* The "active" style that indicates the user is currently in draw mode */
+    .active-mode-button {
+      background-color: #d9534f !important;  
+      border: 2px solid #fff !important; 
+      box-shadow: 0 0 8px rgba(217,83,79,0.5);
     }
     .loading {
       display: none;
