@@ -33,12 +33,18 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       loadingEl.style.display = "inline";
       copyBtn.disabled = true;
-
-      const blob = await fetch(imgElement.src).then(res => res.blob());
+  
+      // 1) Merge the screenshot + drawings into one image
+      const mergedDataUrl = mergeScreenshotAndDrawing();
+  
+      // 2) Convert that data URL to a Blob
+      const blob = await fetch(mergedDataUrl).then(res => res.blob());
+  
+      // 3) Write to clipboard
       await navigator.clipboard.write([
         new ClipboardItem({ [blob.type]: blob })
       ]);
-
+  
       successMessageEl.textContent = "Image copied to clipboard! You can paste it anywhere.";
       successMessageEl.style.display = "block";
       setTimeout(() => {
@@ -56,6 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
       copyBtn.disabled = false;
     }
   });
+  
 
   function mergeScreenshotAndDrawing() {
     // 1. Get references to the base screenshot <img> and the overlay <canvas>
