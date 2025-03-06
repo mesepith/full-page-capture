@@ -57,11 +57,39 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  function mergeScreenshotAndDrawing() {
+    // 1. Get references to the base screenshot <img> and the overlay <canvas>
+    const imgElement = document.getElementById("screenshotImage");  // your base screenshot
+    const drawingCanvas = document.getElementById("drawingCanvas"); // user-drawn lines
+  
+    // 2. Create an offscreen canvas with the same size as the screenshot
+    const offscreen = document.createElement("canvas");
+    offscreen.width = imgElement.width;
+    offscreen.height = imgElement.height;
+    const ctx = offscreen.getContext("2d");
+  
+    // 3. Draw the screenshot first
+    ctx.drawImage(imgElement, 0, 0, offscreen.width, offscreen.height);
+  
+    // 4. Now draw the overlay canvas on top
+    //    Make sure it matches coordinates/dimensions if they differ.
+    ctx.drawImage(drawingCanvas, 0, 0, offscreen.width, offscreen.height);
+  
+    // 5. Export to dataURL (PNG)
+    return offscreen.toDataURL("image/png");
+  }
+  
+
   // Download button
+
   downloadBtn.addEventListener("click", () => {
+    // 1) Merge screenshot + drawings into one data URL
+    const mergedDataUrl = mergeScreenshotAndDrawing();
+  
+    // 2) Ask background script to download the merged image
     chrome.runtime.sendMessage({
       action: "downloadScreenshot",
-      dataUrl: imgElement.src,
+      dataUrl: mergedDataUrl
     });
   });
 });
