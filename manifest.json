@@ -22,7 +22,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["screenshot.html", "screenshot.js"],
+      "resources": ["screenshot.html", "screenshot.js", "draw.js", "images/icon128.png"],
       "matches": ["<all_urls>"]
     }
   ]
