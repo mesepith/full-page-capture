@@ -182,35 +182,37 @@
   </div>
 
   <!-- Tooltip for text -->
-  <div id="textTooltip" class="tooltip">
-    <div class="tooltip-header">
-      <span>Text Options</span>
-      <button class="close-btn" id="closeTextTooltipBtn">&#x25B2;</button>
-    </div>
-    <div class="tooltip-options">
-      <label>
-        Font:
-        <select id="textFontSelect">
-          <option value="Arial">Arial</option>
-          <option value="Times New Roman">Times New Roman</option>
-          <option value="Courier New">Courier New</option>
-        </select>
-      </label>
-      <label>
-        Color:
-        <input type="color" id="textColorPicker" value="#000000" />
-      </label>
-      <label>
-        Size:
-        <input type="range" id="textSizeRange" min="10" max="72" value="24" />
-      </label>
-      <label>
-        Text:
-        <textarea id="textContentArea" rows="3" placeholder="Your text..."></textarea>
-      </label>
-      <button id="applyTextBtn">Apply</button>
-    </div>
+  <!-- Tooltip for text (remove the Apply button) -->
+<div id="textTooltip" class="tooltip">
+  <div class="tooltip-header">
+    <span>Text Options</span>
+    <button class="close-btn" id="closeTextTooltipBtn">&#x25B2;</button>
   </div>
+  <div class="tooltip-options">
+    <label>
+      Font:
+      <select id="textFontSelect">
+        <option value="Arial">Arial</option>
+        <option value="Times New Roman">Times New Roman</option>
+        <option value="Courier New">Courier New</option>
+      </select>
+    </label>
+    <label>
+      Color:
+      <input type="color" id="textColorPicker" value="#000000" />
+    </label>
+    <label>
+      Size:
+      <input type="range" id="textSizeRange" min="10" max="72" value="24" />
+    </label>
+    <label>
+      Text:
+      <!-- No "Apply" button – user will edit text live on the canvas. -->
+      <textarea id="textContentArea" rows="3" placeholder="Click on image to place text..."></textarea>
+    </label>
+  </div>
+</div>
+
 
   <script src="screenshot.js"></script>
   <script src="draw.js"></script>
