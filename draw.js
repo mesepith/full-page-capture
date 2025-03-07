@@ -32,7 +32,6 @@ function initDrawingManager() {
   const textFontSelect = document.getElementById('textFontSelect');
   const textColorPicker = document.getElementById('textColorPicker');
   const textSizeRange = document.getElementById('textSizeRange');
-  const textContentArea = document.getElementById('textContentArea');
   
   // Keep a reference to a dynamic "in-place" editor if we want to show it
   let textEditor = null;
@@ -313,7 +312,6 @@ function initDrawingManager() {
   // CREATE NEW TEXT SHAPE (click in "text" mode)
   // ───────────────────────────────────────────────────────────────────
   function createNewTextShape(x, y) {
-    // This shape starts with blank text
     const newShape = {
       type: 'text',
       text: '',
@@ -324,12 +322,11 @@ function initDrawingManager() {
       y1: y
     };
     shapes.push(newShape);
-    undoneShapes = [];
     selectedShapeIndex = shapes.length - 1;
-    redrawAll();
 
-    // Immediately let the user edit in place
+    // Show in‐place editor immediately
     showTextEditor(newShape);
+    redrawAll();
   }
 
   // ───────────────────────────────────────────────────────────────────
@@ -338,33 +335,36 @@ function initDrawingManager() {
   function showTextEditor(shape) {
     destroyTextEditor(); // remove any existing editor
 
-    // Create a new input or textarea absolutely positioned over the canvas
+    // Create input
     textEditor = document.createElement('input');
     textEditor.type = 'text';
     textEditor.value = shape.text;
-
-    // Position it where shape.x1, shape.y1 is
-    const canvasRect = canvas.getBoundingClientRect();
     textEditor.style.position = 'absolute';
-    textEditor.style.left = (canvasRect.left + shape.x1) + 'px';
-    textEditor.style.top = (canvasRect.top + shape.y1) + 'px';
-    textEditor.style.fontSize = shape.size + 'px';
-    textEditor.style.fontFamily = shape.font;
-    textEditor.style.color = shape.color;
+    textEditor.style.zIndex = 9999;
     textEditor.style.background = 'rgba(255, 255, 255, 0.7)';
     textEditor.style.border = '1px solid #ccc';
-    textEditor.style.zIndex = '9999';
+
+    // Position at shape.x1, shape.y1 in page coordinates
+    const canvasRect = canvas.getBoundingClientRect();
+    textEditor.style.left = (canvasRect.left + shape.x1) + 'px';
+    textEditor.style.top = (canvasRect.top + shape.y1) + 'px';
+
+    // Match the shape’s font & color in the editor if you want
+    textEditor.style.fontFamily = shape.font;
+    textEditor.style.fontSize = shape.size + 'px';
+    textEditor.style.color = shape.color;
 
     document.body.appendChild(textEditor);
     textEditor.focus();
 
-    // On blur or Enter key, update the shape’s text and remove the editor
-    const finalizeEdit = () => {
-      shape.text = textEditor.value;
-      destroyTextEditor();
-      redrawAll();
-    };
+    // Auto‐resize as the user types
+    textEditor.addEventListener('input', () => {
+      autoResizeTextEditor(textEditor, shape);
+    });
+    // Set initial size
+    autoResizeTextEditor(textEditor, shape);
 
+    // Finalize on blur or Enter
     textEditor.addEventListener('blur', finalizeEdit);
     textEditor.addEventListener('keydown', (ev) => {
       if (ev.key === 'Enter') {
@@ -372,6 +372,22 @@ function initDrawingManager() {
         finalizeEdit();
       }
     });
+
+    function finalizeEdit() {
+      shape.text = textEditor.value;
+      destroyTextEditor();
+      redrawAll();
+    }
+  }
+
+  // Automatically size the editor to match the typed text
+  function autoResizeTextEditor(editor, shape) {
+    // Use canvas measureText to figure out actual px width
+    ctx.font = `${shape.size}px ${shape.font}`;
+    const textWidth = ctx.measureText(editor.value || '').width;
+    const minWidth = 20; // enough for ~2 chars at least
+    // Add a bit of padding
+    editor.style.width = Math.max(minWidth, textWidth + 10) + 'px';
   }
 
   function destroyTextEditor() {
@@ -466,6 +482,7 @@ function initDrawingManager() {
   }
 
   function drawShape(shape, isSelected) {
+    
     if (isSelected) {
       drawOutline(shape);
     }
