@@ -334,52 +334,63 @@ function initDrawingManager() {
   // SHOW / DESTROY TEXT EDITOR
   // ───────────────────────────────────────────────────────────────────
   function showTextEditor(shape) {
-    destroyTextEditor(); // remove any existing editor
+    destroyTextEditor(); // Remove any existing editor
 
-    // Create input
+    // Hide the existing text while editing
+    shape.isEditing = true;
+    redrawAll(); // This ensures that the text is not drawn while editing
+
+    // Create input field
     textEditor = document.createElement('input');
     textEditor.type = 'text';
     textEditor.value = shape.text;
     textEditor.style.position = 'absolute';
     textEditor.style.zIndex = 9999;
-    textEditor.style.background = 'rgba(255, 255, 255, 0.7)';
+    textEditor.style.background = 'rgba(255, 255, 255, 0.9)';
     textEditor.style.border = '1px solid #ccc';
+    textEditor.style.padding = '2px 5px';
+    textEditor.style.outline = 'none';
 
-    // Position at shape.x1, shape.y1 in page coordinates
+    // Position input field at shape's coordinates
     const canvasRect = canvas.getBoundingClientRect();
-    textEditor.style.left = (canvasRect.left + shape.x1) + 'px';
-    textEditor.style.top = (canvasRect.top + shape.y1) + 'px';
+    textEditor.style.left = `${canvasRect.left + shape.x1}px`;
+    textEditor.style.top = `${canvasRect.top + shape.y1}px`;
 
-    // Match the shape’s font & color in the editor if you want
+    // Match input styling to canvas text style
     textEditor.style.fontFamily = shape.font;
-    textEditor.style.fontSize = shape.size + 'px';
+    textEditor.style.fontSize = `${shape.size}px`;
     textEditor.style.color = shape.color;
+    textEditor.style.width = 'auto';
+    textEditor.style.minWidth = '50px';
 
     document.body.appendChild(textEditor);
     textEditor.focus();
 
-    // Auto‐resize as the user types
+    // Resize input field dynamically
     textEditor.addEventListener('input', () => {
-      autoResizeTextEditor(textEditor, shape);
+        autoResizeTextEditor(textEditor, shape);
     });
-    // Set initial size
-    autoResizeTextEditor(textEditor, shape);
+    autoResizeTextEditor(textEditor, shape); // Initial resize
 
-    // Finalize on blur or Enter
+    // Finalize edit on blur or Enter
     textEditor.addEventListener('blur', finalizeEdit);
     textEditor.addEventListener('keydown', (ev) => {
-      if (ev.key === 'Enter') {
-        ev.preventDefault();
-        finalizeEdit();
-      }
+        if (ev.key === 'Enter') {
+            ev.preventDefault();
+            finalizeEdit();
+        }
     });
 
     function finalizeEdit() {
-      shape.text = textEditor.value;
-      destroyTextEditor();
-      redrawAll();
+        if (textEditor) {
+            shape.text = textEditor.value.trim() || shape.text; // Keep the original text if empty
+            shape.isEditing = false; // Restore text rendering
+            destroyTextEditor();
+            redrawAll(); // Ensure text is displayed again
+        }
     }
-  }
+}
+
 
   // Automatically size the editor to match the typed text
   function autoResizeTextEditor(editor, shape) {
@@ -550,6 +561,8 @@ function initDrawingManager() {
   }
 
   function drawTextShape(shape) {
+    if (shape.isEditing) return; // Skip drawing text while editing
+
     const { text, font, color, size, x1, y1 } = shape;
     ctx.save();
     ctx.font = `${size}px ${font}`;
@@ -557,7 +570,8 @@ function initDrawingManager() {
     ctx.textBaseline = 'top';
     ctx.fillText(text, x1, y1);
     ctx.restore();
-  }
+}
+
 
   function drawOutline(shape) {
     if (shape.type === 'text') {
