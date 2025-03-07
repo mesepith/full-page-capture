@@ -562,17 +562,6 @@ function initDrawingManager() {
   function drawOutline(shape) {
     if (shape.type === 'text') {
       return; // no outline for text
-      const { text, font, size, x1, y1 } = shape;
-      ctx.save();
-      ctx.font = `${size}px ${font}`;
-      const w = ctx.measureText(text).width;
-      const h = size;
-      ctx.fillStyle = 'white';
-      ctx.fillRect(x1 - 2, y1 - 2, w + 4, h + 4);
-      ctx.strokeStyle = 'orange';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(x1 - 2, y1 - 2, w + 4, h + 4);
-      ctx.restore();
     } else {
       // Outline for lines/shapes
       ctx.save();
