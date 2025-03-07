@@ -263,6 +263,7 @@ function initDrawingManager() {
 
   // ───────────────────────────────────────────────────────────────────
   // DOUBLE CLICK: to edit text
+  // comment by Zahir
   // ───────────────────────────────────────────────────────────────────
   canvas.addEventListener('dblclick', (e) => {
     const rect = canvas.getBoundingClientRect();
@@ -560,6 +561,7 @@ function initDrawingManager() {
 
   function drawOutline(shape) {
     if (shape.type === 'text') {
+      return; // no outline for text
       const { text, font, size, x1, y1 } = shape;
       ctx.save();
       ctx.font = `${size}px ${font}`;
