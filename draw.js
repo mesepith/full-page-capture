@@ -498,11 +498,27 @@ function drawTextShape(shape) {
 
 function drawOutline(shape) {
   if (shape.type === 'text') return;
+
   ctx.save();
-  ctx.strokeStyle = 'white';
-  ctx.lineWidth = (shape.size || 3) + 4;
+  const outlineSize = (shape.size || 3) + 4;
+
+  // **Step 1: Draw black outline (shadow effect)**
+  ctx.strokeStyle = 'black';
+  ctx.lineWidth = outlineSize + 2; // Slightly larger
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
+  drawShapeOutline(shape);
+
+  // **Step 2: Draw white outline on top**
+  ctx.strokeStyle = 'white';
+  ctx.lineWidth = outlineSize; // Smaller than black outline
+  drawShapeOutline(shape);
+
+  ctx.restore();
+}
+
+// **Helper function to draw shape outlines**
+function drawShapeOutline(shape) {
   if (shape.type === 'line' || shape.type === 'arrow') {
     ctx.beginPath();
     ctx.moveTo(shape.x1, shape.y1);
@@ -523,8 +539,8 @@ function drawOutline(shape) {
     const h = Math.abs(shape.y2 - shape.y1);
     ctx.strokeRect(left, top, w, h);
   }
-  ctx.restore();
 }
+
 
 // **Hit Testing for Selection**
 
