@@ -295,7 +295,7 @@ function showTextEditor(shape) {
 
   textEditor = document.createElement('input');
   textEditor.type = 'text';
-  textEditor.value = shape.text;
+  textEditor.value = shape.text || '';
   textEditor.style.position = 'absolute';
   textEditor.style.zIndex = '9999';
   textEditor.style.background = 'rgba(255, 255, 255, 0.9)';
@@ -315,16 +315,18 @@ function showTextEditor(shape) {
   document.body.appendChild(textEditor);
   requestAnimationFrame(() => textEditor.focus());
 
-  textEditor.addEventListener('input', () => autoResizeTextEditor(textEditor, shape));
-  autoResizeTextEditor(textEditor, shape);
-
-  textEditor.addEventListener('blur', finalizeEdit);
-  textEditor.addEventListener('keydown', (ev) => {
+  function handleKeydown(ev) {
     if (ev.key === 'Enter') {
       ev.preventDefault();
       finalizeEdit();
     }
-  });
+  }
+
+  textEditor.addEventListener('input', () => autoResizeTextEditor(textEditor, shape));
+  autoResizeTextEditor(textEditor, shape);
+
+  textEditor.addEventListener('blur', finalizeEdit);
+  textEditor.addEventListener('keydown', handleKeydown);
 
   function finalizeEdit() {
     if (textEditor) {
@@ -334,6 +336,9 @@ function showTextEditor(shape) {
       redrawAll();
     }
   }
+
+  textEditor._blurHandler = finalizeEdit;
+  textEditor._keydownHandler = handleKeydown;
 }
 
 function autoResizeTextEditor(editor, shape) {
@@ -345,7 +350,11 @@ function autoResizeTextEditor(editor, shape) {
 
 function destroyTextEditor() {
   if (textEditor) {
-    textEditor.remove();
+    textEditor.removeEventListener('blur', textEditor._blurHandler);
+    textEditor.removeEventListener('keydown', textEditor._keydownHandler);
+    if (document.body.contains(textEditor)) {
+      textEditor.remove();
+    }
     textEditor = null;
   }
 }
