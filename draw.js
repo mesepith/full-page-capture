@@ -502,16 +502,21 @@ function drawOutline(shape) {
   ctx.save();
   const outlineSize = (shape.size || 3) + 4;
 
-  // **Step 1: Draw black outline (shadow effect)**
-  ctx.strokeStyle = 'black';
-  ctx.lineWidth = outlineSize + 2; // Slightly larger
+  // **Step 1: Draw red outline (always visible)**
+  ctx.strokeStyle = 'red';
+  ctx.lineWidth = outlineSize + 4; // Largest size
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
   drawShapeOutline(shape);
 
-  // **Step 2: Draw white outline on top**
+  // **Step 2: Draw black outline (shadow effect)**
+  ctx.strokeStyle = 'black';
+  ctx.lineWidth = outlineSize + 2;
+  drawShapeOutline(shape);
+
+  // **Step 3: Draw white outline (final layer)**
   ctx.strokeStyle = 'white';
-  ctx.lineWidth = outlineSize; // Smaller than black outline
+  ctx.lineWidth = outlineSize;
   drawShapeOutline(shape);
 
   ctx.restore();
@@ -540,6 +545,7 @@ function drawShapeOutline(shape) {
     ctx.strokeRect(left, top, w, h);
   }
 }
+
 
 
 // **Hit Testing for Selection**
