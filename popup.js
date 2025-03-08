@@ -1,7 +1,7 @@
 // Define statusEl globally to be accessible in the message listener
 const statusEl = document.getElementById('status');
 
-document.getElementById('captureBtn').addEventListener('click', async () => {
+document.getElementById('captureBtn2').addEventListener('click', async () => {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     await chrome.scripting.executeScript({
