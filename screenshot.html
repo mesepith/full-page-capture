@@ -11,12 +11,17 @@
       background-color: #f0f0f0;
     }
     .header {
-      display: flex; align-items: center;
+      display: flex;
+      align-items: center;
       padding: 10px;
       background-color: #fff;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       border-bottom: 1px dotted #4285f4;
-      position: relative;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1000;
     }
     .logo-container {
       flex: 1; display: flex;
@@ -51,16 +56,21 @@
       box-shadow: 0 0 8px rgba(217,83,79,0.5);
     }
     .content {
-      flex: 1; display: flex;
-      justify-content: center; align-items: center;
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       position: relative;
+      margin-top: 60px; /* Ensure image is not hidden behind the fixed header */
     }
     #screenshotImage {
       max-width: 100%;
       display: block;
     }
     .image-container {
-      position: relative; display: inline-block;
+      position: relative;
+      display: inline-block;
+      padding-top: 20px; /* Adjust this padding so that the top part of the image is visible */
     }
     #drawingCanvas {
       position: absolute; top: 0; left: 0;
