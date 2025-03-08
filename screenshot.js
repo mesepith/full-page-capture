@@ -19,9 +19,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const rect = imgElement.getBoundingClientRect();
         canvas.width = rect.width;
         canvas.height = rect.height;
-
-        // Initialize the drawing/selection manager
-        initDrawingManager();
       };
     } else {
       imgElement.alt = "Error: Screenshot data not found.";
