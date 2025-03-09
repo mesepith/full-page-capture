@@ -524,28 +524,31 @@ function drawTextShape(shape) {
 function drawOutline(shape) {
   ctx.save();
 
-  if (shape.type === 'text') {
-    // Add outline for text selection
+  if (shape.type === 'text' && shape.text.trim() !== '') {
+    // Ensure text is present before drawing the outline
     const { text, font, size, x1, y1 } = shape;
     ctx.font = `${size}px ${font}`;
     const textWidth = ctx.measureText(text).width;
     const textHeight = size; // Approximate text height
 
+    // Add padding to prevent overlap
+    const padding = 5;
+
     // **Step 1: Draw Red Outline (Always Visible)**
     ctx.strokeStyle = 'red';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(x1 - 2, y1 - 2, textWidth + 4, textHeight + 4);
+    ctx.lineWidth = 3;
+    ctx.strokeRect(x1 - padding, y1 - padding, textWidth + 2 * padding, textHeight + 2 * padding);
 
     // **Step 2: Draw Black Shadow (For Depth)**
     ctx.strokeStyle = 'black';
     ctx.lineWidth = 2;
-    ctx.strokeRect(x1 - 1, y1 - 1, textWidth + 2, textHeight + 2);
+    ctx.strokeRect(x1 - padding + 1, y1 - padding + 1, textWidth + 2 * padding - 2, textHeight + 2 * padding - 2);
 
     // **Step 3: Draw White Border (Final Layer)**
     ctx.strokeStyle = 'white';
     ctx.lineWidth = 1;
-    ctx.strokeRect(x1, y1, textWidth, textHeight);
-  } else {
+    ctx.strokeRect(x1 - padding + 2, y1 - padding + 2, textWidth + 2 * padding - 4, textHeight + 2 * padding - 4);
+  } else if (shape.type !== 'text') {
     // Existing outline for shapes (Line, Circle, Rectangle)
     const outlineSize = (shape.size || 3) + 4;
 
@@ -569,6 +572,7 @@ function drawOutline(shape) {
 
   ctx.restore();
 }
+
 
 
 // **Helper function to draw shape outlines**
