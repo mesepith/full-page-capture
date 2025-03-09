@@ -237,17 +237,25 @@ canvas.addEventListener('mouseup', (e) => {
   if (isDragging) {
     isDragging = false;
   }
+  
   if (isDrawing && (mode === 'line' || mode === 'shape')) {
     isDrawing = false;
     const rect = canvas.getBoundingClientRect();
     const endX = e.clientX - rect.left;
     const endY = e.clientY - rect.top;
+
+    // Prevent zero-length arrows (clicking without dragging)
+    if (startX === endX && startY === endY) {
+      return; // Don't create the shape if no movement
+    }
+
     const newShape = buildShapeObj(mode, endX, endY);
     shapes.push(newShape);
     undoneShapes = [];
     redrawAll();
   }
 });
+
 
 canvas.addEventListener('dblclick', (e) => {
   const rect = canvas.getBoundingClientRect();
@@ -628,7 +636,9 @@ function hitTestText(shape, px, py) {
 function hitTestLineOrShape(shape, px, py) {
   const threshold = 10;
   const { type, x1, y1, x2, y2 } = shape;
+
   if (type === 'line' || type === 'arrow') {
+    // Check if the point is near the line shaft
     const A = px - x1;
     const B = py - y1;
     const C = x2 - x1;
@@ -642,7 +652,21 @@ function hitTestLineOrShape(shape, px, py) {
     else if (param > 1) { xx = x2; yy = y2; }
     else { xx = x1 + param * C; yy = y1 + param * D; }
     const dist = Math.sqrt((px - xx) ** 2 + (py - yy) ** 2);
-    return dist < threshold;
+
+    // Selectable if near the shaft
+    if (dist < threshold) return true;
+
+    // Check if the point is inside the arrowhead (triangle)
+    if (type === 'arrow') {
+      const arrowSize = 10 + (shape.size * 2);
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      const arrowX1 = x2 - arrowSize * Math.cos(angle - Math.PI / 6);
+      const arrowY1 = y2 - arrowSize * Math.sin(angle - Math.PI / 6);
+      const arrowX2 = x2 - arrowSize * Math.cos(angle + Math.PI / 6);
+      const arrowY2 = y2 - arrowSize * Math.sin(angle + Math.PI / 6);
+
+      return pointInTriangle(px, py, x2, y2, arrowX1, arrowY1, arrowX2, arrowY2);
+    }
   } else if (type === 'circle' || type === 'rect') {
     const left = Math.min(x1, x2);
     const right = Math.max(x1, x2);
@@ -654,4 +678,13 @@ function hitTestLineOrShape(shape, px, py) {
     );
   }
   return false;
+}
+
+// **Helper function to check if a point is inside a triangle**
+function pointInTriangle(px, py, ax, ay, bx, by, cx, cy) {
+  const areaOrig = Math.abs((bx - ax) * (cy - ay) - (cx - ax) * (by - ay));
+  const area1 = Math.abs((ax - px) * (by - py) - (bx - px) * (ay - py));
+  const area2 = Math.abs((bx - px) * (cy - py) - (cx - px) * (by - py));
+  const area3 = Math.abs((cx - px) * (ay - py) - (ax - px) * (cy - py));
+  return Math.abs(area1 + area2 + area3 - areaOrig) < 0.1;
 }
