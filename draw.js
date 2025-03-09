@@ -522,30 +522,54 @@ function drawTextShape(shape) {
 }
 
 function drawOutline(shape) {
-  if (shape.type === 'text') return;
-
   ctx.save();
-  const outlineSize = (shape.size || 3) + 4;
 
-  // **Step 1: Draw red outline (always visible)**
-  ctx.strokeStyle = 'red';
-  ctx.lineWidth = outlineSize + 4; // Largest size
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  drawShapeOutline(shape);
+  if (shape.type === 'text') {
+    // Add outline for text selection
+    const { text, font, size, x1, y1 } = shape;
+    ctx.font = `${size}px ${font}`;
+    const textWidth = ctx.measureText(text).width;
+    const textHeight = size; // Approximate text height
 
-  // **Step 2: Draw black outline (shadow effect)**
-  ctx.strokeStyle = 'black';
-  ctx.lineWidth = outlineSize + 2;
-  drawShapeOutline(shape);
+    // **Step 1: Draw Red Outline (Always Visible)**
+    ctx.strokeStyle = 'red';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(x1 - 2, y1 - 2, textWidth + 4, textHeight + 4);
 
-  // **Step 3: Draw white outline (final layer)**
-  ctx.strokeStyle = 'white';
-  ctx.lineWidth = outlineSize;
-  drawShapeOutline(shape);
+    // **Step 2: Draw Black Shadow (For Depth)**
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x1 - 1, y1 - 1, textWidth + 2, textHeight + 2);
+
+    // **Step 3: Draw White Border (Final Layer)**
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x1, y1, textWidth, textHeight);
+  } else {
+    // Existing outline for shapes (Line, Circle, Rectangle)
+    const outlineSize = (shape.size || 3) + 4;
+
+    // **Step 1: Draw Red Outline (Always Visible)**
+    ctx.strokeStyle = 'red';
+    ctx.lineWidth = outlineSize + 4;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    drawShapeOutline(shape);
+
+    // **Step 2: Draw Black Shadow (For Depth)**
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = outlineSize + 2;
+    drawShapeOutline(shape);
+
+    // **Step 3: Draw White Border (Final Layer)**
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = outlineSize;
+    drawShapeOutline(shape);
+  }
 
   ctx.restore();
 }
+
 
 // **Helper function to draw shape outlines**
 function drawShapeOutline(shape) {
