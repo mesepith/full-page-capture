@@ -689,6 +689,9 @@ function pointInTriangle(px, py, ax, ay, bx, by, cx, cy) {
   return Math.abs(area1 + area2 + area3 - areaOrig) < 0.1;
 }
 
+/*
+Close Tooltip on click close arrow in tooltip
+*/
 document.addEventListener("DOMContentLoaded", () => {
   // Function to close all tooltips
   function closeAllTooltips() {
