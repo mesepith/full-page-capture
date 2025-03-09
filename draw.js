@@ -96,6 +96,7 @@ drawBtn.addEventListener('click', () => {
     mode = 'select';
     highlightButton(selectBtn);
   } else {
+    lastActiveMode = 'line'; // Store last active tool
     mode = 'line';
     highlightButton(drawBtn);
     closeAllTooltips();
@@ -113,6 +114,7 @@ drawShapeBtn.addEventListener('click', () => {
     mode = 'select';
     highlightButton(selectBtn);
   } else {
+    lastActiveMode = 'shape'; // Store last active tool
     mode = 'shape';
     highlightButton(drawShapeBtn);
     closeAllTooltips();
@@ -130,16 +132,18 @@ drawTextBtn.addEventListener('click', () => {
     mode = 'select';
     highlightButton(selectBtn);
   } else {
+    lastActiveMode = 'text'; // Store last active tool
     mode = 'text';
     highlightButton(drawTextBtn);
     closeAllTooltips();
     showTooltipBelowButton(textTooltip, drawTextBtn);
     canvas.style.cursor = 'text';
     selectedShapeIndex = -1;
-    destroyTextEditor();
+    destroyTextEditor(); // Ensure no old text editor remains
   }
   redrawAll();
 });
+
 
 // **Canvas Event Listeners**
 
@@ -148,48 +152,60 @@ canvas.addEventListener('mousedown', (e) => {
   const clickX = e.clientX - rect.left;
   const clickY = e.clientY - rect.top;
 
+  // Find if an existing shape is clicked
   const foundIndex = findTopShape(shapes, clickX, clickY);
 
-  if (mode === 'select') {
+  if (foundIndex !== -1) {
+    // Clicked on an existing shape → Activate 'Select' mode
+    mode = 'select';
+    highlightButton(selectBtn);
+    closeAllTooltips();
     selectedShapeIndex = foundIndex;
-    if (foundIndex !== -1) {
-      const shape = shapes[foundIndex];
-      isDragging = true;
-      dragOffsetX = clickX - shape.x1;
-      dragOffsetY = clickY - shape.y1;
-    } else {
-      isDragging = false;
-      selectedShapeIndex = -1;
-    }
-    redrawAll();
-  } else if (mode === 'text') {
-    if (foundIndex === -1) {
-      createNewTextShape(clickX, clickY);
-    } else if (shapes[foundIndex].type === 'text') {
-      selectedShapeIndex = foundIndex;
-      isDragging = true;
-      const shape = shapes[foundIndex];
-      dragOffsetX = clickX - shape.x1;
-      dragOffsetY = clickY - shape.y1;
-    }
-    redrawAll();
-  } else if (mode === 'line' || mode === 'shape') {
-    if (foundIndex !== -1) {
-      mode = 'select';
-      highlightButton(selectBtn);
-      selectedShapeIndex = foundIndex;
-      isDragging = true;
-      const shape = shapes[foundIndex];
-      dragOffsetX = clickX - shape.x1;
-      dragOffsetY = clickY - shape.y1;
-    } else {
+    isDragging = true;
+    const shape = shapes[foundIndex];
+    dragOffsetX = clickX - shape.x1;
+    dragOffsetY = clickY - shape.y1;
+  } else {
+    // Clicked on an empty area
+    isDragging = false;
+    selectedShapeIndex = -1;
+
+    if (mode === 'line' || mode === 'shape') {
+      // Start drawing a new line or shape
       isDrawing = true;
       startX = clickX;
       startY = clickY;
+    } else if (mode === 'text') {
+      // Create a new text input on click
+      createNewTextShape(clickX, clickY);
+    } else if (mode === 'select') {
+      // If the last selected mode was 'line', 'shape', or 'text', switch back
+      if (lastActiveMode === 'line') {
+        mode = 'line';
+        highlightButton(drawBtn);
+        showTooltipBelowButton(drawTooltip, drawBtn);
+        isDrawing = true;
+        startX = clickX;
+        startY = clickY;
+      } else if (lastActiveMode === 'shape') {
+        mode = 'shape';
+        highlightButton(drawShapeBtn);
+        showTooltipBelowButton(shapeTooltip, drawShapeBtn);
+        isDrawing = true;
+        startX = clickX;
+        startY = clickY;
+      } else if (lastActiveMode === 'text') {
+        mode = 'text';
+        highlightButton(drawTextBtn);
+        showTooltipBelowButton(textTooltip, drawTextBtn);
+        createNewTextShape(clickX, clickY);
+      }
     }
-    redrawAll();
   }
+  redrawAll();
 });
+
+
 
 canvas.addEventListener('mousemove', (e) => {
   const rect = canvas.getBoundingClientRect();
