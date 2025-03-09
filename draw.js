@@ -688,3 +688,17 @@ function pointInTriangle(px, py, ax, ay, bx, by, cx, cy) {
   const area3 = Math.abs((cx - px) * (ay - py) - (ax - px) * (cy - py));
   return Math.abs(area1 + area2 + area3 - areaOrig) < 0.1;
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Function to close all tooltips
+  function closeAllTooltips() {
+    drawTooltip.style.display = "none";
+    shapeTooltip.style.display = "none";
+    textTooltip.style.display = "none";
+  }
+
+  // Attach event listeners to each close button
+  document.querySelectorAll(".close-btn").forEach(button => {
+    button.addEventListener("click", closeAllTooltips);
+  });
+});
