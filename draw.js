@@ -3,6 +3,7 @@
 // Canvas setup
 const canvas = document.getElementById('drawingCanvas');
 const ctx = canvas.getContext('2d');
+const imgElement = document.getElementById('screenshotImage');
 
 // UI Elements
 // Buttons
@@ -11,6 +12,7 @@ const drawBtn = document.getElementById('drawBtn');
 const drawShapeBtn = document.getElementById('drawShapeBtn');
 const drawTextBtn = document.getElementById('drawTextBtn');
 const highlightBtn = document.getElementById('highlightBtn');
+const blurBtn = document.getElementById('blurBtn'); // New Blur button
 const undoBtn = document.getElementById('undoBtn');
 const redoBtn = document.getElementById('redoBtn');
 
@@ -22,6 +24,7 @@ const closeShapeTooltipBtn = document.getElementById('closeShapeTooltipBtn');
 const textTooltip = document.getElementById('textTooltip');
 const closeTextTooltipBtn = document.getElementById('closeTextTooltipBtn');
 const highlightTooltip = document.getElementById('highlightTooltip');
+const blurTooltip = document.getElementById('blurTooltip'); // New Blur tooltip
 
 // Controls for lines
 const lineShapeSelect = document.getElementById('lineShapeSelect');
@@ -41,6 +44,9 @@ const textSizeRange = document.getElementById('textSizeRange');
 // Controls for highlight
 const highlightColorPicker = document.getElementById('highlightColorPicker');
 const highlightOpacityRange = document.getElementById('highlightOpacityRange');
+
+// Controls for blur
+const blurIntensityRange = document.getElementById('blurIntensityRange'); // New Blur control
 
 // State management
 let shapes = []; // Array of drawn shapes
@@ -170,6 +176,23 @@ highlightBtn.addEventListener('click', () => {
   redrawAll();
 });
 
+blurBtn.addEventListener('click', () => {
+  if (blurTooltip.style.display === 'block') {
+    closeAllTooltips();
+    mode = 'select';
+    highlightButton(selectBtn);
+  } else {
+    lastActiveMode = 'blur';
+    mode = 'blur';
+    highlightButton(blurBtn);
+    closeAllTooltips();
+    showTooltipBelowButton(blurTooltip, blurBtn);
+    canvas.style.cursor = 'crosshair';
+    selectedShapeIndex = -1;
+  }
+  redrawAll();
+});
+
 // **Canvas Event Listeners**
 
 canvas.addEventListener('mousedown', (e) => {
@@ -192,7 +215,7 @@ canvas.addEventListener('mousedown', (e) => {
     isDragging = false;
     selectedShapeIndex = -1;
 
-    if (mode === 'line' || mode === 'shape' || mode === 'highlight') {
+    if (mode === 'line' || mode === 'shape' || mode === 'highlight' || mode === 'blur') {
       isDrawing = true;
       startX = clickX;
       startY = clickY;
@@ -250,7 +273,7 @@ canvas.addEventListener('mousemove', (e) => {
       shape.y2 += dy;
     }
     redrawAll();
-  } else if (isDrawing && (mode === 'line' || mode === 'shape' || mode === 'highlight')) {
+  } else if (isDrawing && (mode === 'line' || mode === 'shape' || mode === 'highlight' || mode === 'blur')) {
     redrawAll();
     const shapeObj = buildShapeObj(mode, mouseX, mouseY);
     drawShape(shapeObj, false);
@@ -262,7 +285,7 @@ canvas.addEventListener('mouseup', (e) => {
     isDragging = false;
   }
   
-  if (isDrawing && (mode === 'line' || mode === 'shape' || mode === 'highlight')) {
+  if (isDrawing && (mode === 'line' || mode === 'shape' || mode === 'highlight' || mode === 'blur')) {
     isDrawing = false;
     const rect = canvas.getBoundingClientRect();
     const endX = e.clientX - rect.left;
@@ -319,6 +342,15 @@ function buildShapeObj(mode, mouseX, mouseY) {
       type: 'highlight',
       color: highlightColorPicker.value,
       opacity: parseInt(highlightOpacityRange.value, 10) / 100,
+      x1: startX,
+      y1: startY,
+      x2: mouseX,
+      y2: mouseY
+    };
+  } else if (mode === 'blur') {
+    return {
+      type: 'blur',
+      intensity: parseInt(blurIntensityRange.value, 10),
       x1: startX,
       y1: startY,
       x2: mouseX,
@@ -512,7 +544,22 @@ function drawShape(shape, isSelected) {
     const h = Math.abs(y2 - y1);
     ctx.fillRect(left, top, w, h);
     ctx.restore();
-  }
+  } else if (shape.type === 'blur') {
+    const { intensity, x1, y1, x2, y2 } = shape;
+    const left = Math.min(x1, x2);
+    const top = Math.min(y1, y2);
+    const w = Math.abs(x2 - x1);
+    const h = Math.abs(y2 - y1);
+    const scaleX = imgElement.naturalWidth / canvas.width;
+    const scaleY = imgElement.naturalHeight / canvas.height;
+    const sx = left * scaleX;        // Source x in image's natural coordinates
+    const sy = top * scaleY;         // Source y in image's natural coordinates
+    const sWidth = w * scaleX;       // Source width
+    const sHeight = h * scaleY;      // Source height
+    ctx.save();
+    ctx.filter = `blur(${intensity}px)`;
+    ctx.drawImage(imgElement, sx, sy, sWidth, sHeight, left, top, w, h);
+    ctx.restore();}
 }
 
 function drawLineOrShape(shape) {

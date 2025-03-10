@@ -176,6 +176,7 @@
       <button id="drawShapeBtn">Draw Shape</button>
       <button id="drawTextBtn">Add Text</button>
       <button id="highlightBtn">Highlight</button>
+      <button id="blurBtn">Blur</button>
     </div>
 
     <!-- Right Section: Copy & Download Buttons -->
@@ -286,6 +287,20 @@
     <label>
       Opacity:
       <input type="range" id="highlightOpacityRange" min="0" max="100" value="50" />
+    </label>
+  </div>
+</div>
+
+<!-- Tooltip for blur -->
+<div id="blurTooltip" class="tooltip">
+  <div class="tooltip-header">
+    <span>Blur Options</span>
+    <button class="close-btn" id="closeBlurTooltipBtn">▲</button>
+  </div>
+  <div class="tooltip-options">
+    <label>
+      Blur Intensity:
+      <input type="range" id="blurIntensityRange" min="1" max="10" value="5" />
     </label>
   </div>
 </div>
