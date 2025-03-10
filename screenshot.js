@@ -12,13 +12,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Clean up storage after loading the image
       imgElement.onload = () => {
-        chrome.storage.local.remove("screenshotDataUrl");
-
-        // Once the image is loaded, match the canvas size to the image
-        const canvas = document.getElementById("drawingCanvas");
-        const rect = imgElement.getBoundingClientRect();
-        canvas.width = rect.width;
-        canvas.height = rect.height;
+          chrome.storage.local.remove("screenshotDataUrl");
+      
+          // Get the container and image bounding rectangles
+          const container = document.getElementById('imageContainer');
+          const containerRect = container.getBoundingClientRect();
+          const imgRect = imgElement.getBoundingClientRect();
+      
+          // Calculate offsets relative to the container
+          const topOffset = imgRect.top - containerRect.top; // Accounts for padding-top
+          const leftOffset = imgRect.left - containerRect.left; // Accounts for padding-left
+      
+          // Set canvas size to the image’s rendered size
+          const canvas = document.getElementById("drawingCanvas");
+          canvas.width = imgRect.width;
+          canvas.height = imgRect.height;
+      
+          // Position canvas exactly over the image
+          canvas.style.position = 'absolute';
+          canvas.style.top = `${topOffset}px`;
+          canvas.style.left = `${leftOffset}px`;
       };
     } else {
       imgElement.alt = "Error: Screenshot data not found.";
@@ -62,25 +75,30 @@ document.addEventListener("DOMContentLoaded", () => {
   
 
   function mergeScreenshotAndDrawing() {
-    // 1. Get references to the base screenshot <img> and the overlay <canvas>
-    const imgElement = document.getElementById("screenshotImage");  // your base screenshot
-    const drawingCanvas = document.getElementById("drawingCanvas"); // user-drawn lines
-  
-    // 2. Create an offscreen canvas with the same size as the screenshot
-    const offscreen = document.createElement("canvas");
-    offscreen.width = imgElement.width;
-    offscreen.height = imgElement.height;
-    const ctx = offscreen.getContext("2d");
-  
-    // 3. Draw the screenshot first
-    ctx.drawImage(imgElement, 0, 0, offscreen.width, offscreen.height);
-  
-    // 4. Now draw the overlay canvas on top
-    //    Make sure it matches coordinates/dimensions if they differ.
-    ctx.drawImage(drawingCanvas, 0, 0, offscreen.width, offscreen.height);
-  
-    // 5. Export to dataURL (PNG)
-    return offscreen.toDataURL("image/png");
+      const imgElement = document.getElementById("screenshotImage");
+      const drawingCanvas = document.getElementById("drawingCanvas");
+
+      // Create an offscreen canvas with the natural size of the image
+      const offscreen = document.createElement("canvas");
+      offscreen.width = imgElement.naturalWidth;
+      offscreen.height = imgElement.naturalHeight;
+      const ctx = offscreen.getContext("2d");
+
+      // Draw the image at its natural size
+      ctx.drawImage(imgElement, 0, 0, offscreen.width, offscreen.height);
+
+      // Calculate scaling factors from rendered size to natural size
+      const scaleX = offscreen.width / drawingCanvas.width;
+      const scaleY = offscreen.height / drawingCanvas.height;
+
+      // Scale and draw the canvas onto the offscreen canvas
+      ctx.save();
+      ctx.scale(scaleX, scaleY);
+      ctx.drawImage(drawingCanvas, 0, 0);
+      ctx.restore();
+
+      // Export to dataURL (PNG)
+      return offscreen.toDataURL("image/png");
   }
   
 

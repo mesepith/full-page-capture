@@ -10,6 +10,7 @@ const selectBtn = document.getElementById('selectBtn');
 const drawBtn = document.getElementById('drawBtn');
 const drawShapeBtn = document.getElementById('drawShapeBtn');
 const drawTextBtn = document.getElementById('drawTextBtn');
+const highlightBtn = document.getElementById('highlightBtn');
 const undoBtn = document.getElementById('undoBtn');
 const redoBtn = document.getElementById('redoBtn');
 
@@ -20,6 +21,7 @@ const shapeTooltip = document.getElementById('shapeTooltip');
 const closeShapeTooltipBtn = document.getElementById('closeShapeTooltipBtn');
 const textTooltip = document.getElementById('textTooltip');
 const closeTextTooltipBtn = document.getElementById('closeTextTooltipBtn');
+const highlightTooltip = document.getElementById('highlightTooltip');
 
 // Controls for lines
 const lineShapeSelect = document.getElementById('lineShapeSelect');
@@ -36,6 +38,10 @@ const textFontSelect = document.getElementById('textFontSelect');
 const textColorPicker = document.getElementById('textColorPicker');
 const textSizeRange = document.getElementById('textSizeRange');
 
+// Controls for highlight
+const highlightColorPicker = document.getElementById('highlightColorPicker');
+const highlightOpacityRange = document.getElementById('highlightOpacityRange');
+
 // State management
 let shapes = []; // Array of drawn shapes
 let undoneShapes = []; // Stack for redo functionality
@@ -46,7 +52,8 @@ let dragOffsetX = 0; // Offset for dragging
 let dragOffsetY = 0;
 let startX = 0; // Starting coordinates for drawing
 let startY = 0;
-let mode = 'select'; // Current mode: 'select', 'line', 'shape', or 'text'
+let mode = 'select'; // Current mode: 'select', 'line', 'shape', 'text', 'highlight'
+let lastActiveMode = 'select'; // Last active drawing mode
 let textEditor = null; // Reference to the text input field
 
 // **Helper Functions**
@@ -65,7 +72,7 @@ function showTooltipBelowButton(tooltipEl, buttonEl) {
 
 // Highlight the active mode button
 function highlightButton(btn) {
-  [selectBtn, drawBtn, drawShapeBtn, drawTextBtn].forEach(b => {
+  [selectBtn, drawBtn, drawShapeBtn, drawTextBtn, highlightBtn].forEach(b => {
     b.classList.remove('active-mode-button');
   });
   btn.classList.add('active-mode-button');
@@ -76,6 +83,7 @@ function closeAllTooltips() {
   drawTooltip.style.display = 'none';
   shapeTooltip.style.display = 'none';
   textTooltip.style.display = 'none';
+  highlightTooltip.style.display = 'none';
 }
 
 // **Mode Switching Event Listeners**
@@ -96,7 +104,7 @@ drawBtn.addEventListener('click', () => {
     mode = 'select';
     highlightButton(selectBtn);
   } else {
-    lastActiveMode = 'line'; // Store last active tool
+    lastActiveMode = 'line';
     mode = 'line';
     highlightButton(drawBtn);
     closeAllTooltips();
@@ -114,7 +122,7 @@ drawShapeBtn.addEventListener('click', () => {
     mode = 'select';
     highlightButton(selectBtn);
   } else {
-    lastActiveMode = 'shape'; // Store last active tool
+    lastActiveMode = 'shape';
     mode = 'shape';
     highlightButton(drawShapeBtn);
     closeAllTooltips();
@@ -132,18 +140,35 @@ drawTextBtn.addEventListener('click', () => {
     mode = 'select';
     highlightButton(selectBtn);
   } else {
-    lastActiveMode = 'text'; // Store last active tool
+    lastActiveMode = 'text';
     mode = 'text';
     highlightButton(drawTextBtn);
     closeAllTooltips();
     showTooltipBelowButton(textTooltip, drawTextBtn);
     canvas.style.cursor = 'text';
     selectedShapeIndex = -1;
-    destroyTextEditor(); // Ensure no old text editor remains
+    destroyTextEditor();
   }
   redrawAll();
 });
 
+highlightBtn.addEventListener('click', () => {
+  if (highlightTooltip.style.display === 'block') {
+    closeAllTooltips();
+    mode = 'select';
+    highlightButton(selectBtn);
+  } else {
+    lastActiveMode = 'highlight';
+    mode = 'highlight';
+    highlightButton(highlightBtn);
+    closeAllTooltips();
+    showTooltipBelowButton(highlightTooltip, highlightBtn);
+    canvas.style.cursor = 'crosshair';
+    selectedShapeIndex = -1;
+    destroyTextEditor();
+  }
+  redrawAll();
+});
 
 // **Canvas Event Listeners**
 
@@ -152,11 +177,9 @@ canvas.addEventListener('mousedown', (e) => {
   const clickX = e.clientX - rect.left;
   const clickY = e.clientY - rect.top;
 
-  // Find if an existing shape is clicked
   const foundIndex = findTopShape(shapes, clickX, clickY);
 
   if (foundIndex !== -1) {
-    // Clicked on an existing shape → Activate 'Select' mode
     mode = 'select';
     highlightButton(selectBtn);
     closeAllTooltips();
@@ -166,20 +189,16 @@ canvas.addEventListener('mousedown', (e) => {
     dragOffsetX = clickX - shape.x1;
     dragOffsetY = clickY - shape.y1;
   } else {
-    // Clicked on an empty area
     isDragging = false;
     selectedShapeIndex = -1;
 
-    if (mode === 'line' || mode === 'shape') {
-      // Start drawing a new line or shape
+    if (mode === 'line' || mode === 'shape' || mode === 'highlight') {
       isDrawing = true;
       startX = clickX;
       startY = clickY;
     } else if (mode === 'text') {
-      // Create a new text input on click
       createNewTextShape(clickX, clickY);
     } else if (mode === 'select') {
-      // If the last selected mode was 'line', 'shape', or 'text', switch back
       if (lastActiveMode === 'line') {
         mode = 'line';
         highlightButton(drawBtn);
@@ -199,13 +218,18 @@ canvas.addEventListener('mousedown', (e) => {
         highlightButton(drawTextBtn);
         showTooltipBelowButton(textTooltip, drawTextBtn);
         createNewTextShape(clickX, clickY);
+      } else if (lastActiveMode === 'highlight') {
+        mode = 'highlight';
+        highlightButton(highlightBtn);
+        showTooltipBelowButton(highlightTooltip, highlightBtn);
+        isDrawing = true;
+        startX = clickX;
+        startY = clickY;
       }
     }
   }
   redrawAll();
 });
-
-
 
 canvas.addEventListener('mousemove', (e) => {
   const rect = canvas.getBoundingClientRect();
@@ -226,7 +250,7 @@ canvas.addEventListener('mousemove', (e) => {
       shape.y2 += dy;
     }
     redrawAll();
-  } else if (isDrawing && (mode === 'line' || mode === 'shape')) {
+  } else if (isDrawing && (mode === 'line' || mode === 'shape' || mode === 'highlight')) {
     redrawAll();
     const shapeObj = buildShapeObj(mode, mouseX, mouseY);
     drawShape(shapeObj, false);
@@ -238,15 +262,14 @@ canvas.addEventListener('mouseup', (e) => {
     isDragging = false;
   }
   
-  if (isDrawing && (mode === 'line' || mode === 'shape')) {
+  if (isDrawing && (mode === 'line' || mode === 'shape' || mode === 'highlight')) {
     isDrawing = false;
     const rect = canvas.getBoundingClientRect();
     const endX = e.clientX - rect.left;
     const endY = e.clientY - rect.top;
 
-    // Prevent zero-length arrows (clicking without dragging)
     if (startX === endX && startY === endY) {
-      return; // Don't create the shape if no movement
+      return;
     }
 
     const newShape = buildShapeObj(mode, endX, endY);
@@ -255,7 +278,6 @@ canvas.addEventListener('mouseup', (e) => {
     redrawAll();
   }
 });
-
 
 canvas.addEventListener('dblclick', (e) => {
   const rect = canvas.getBoundingClientRect();
@@ -287,6 +309,16 @@ function buildShapeObj(mode, mouseX, mouseY) {
       type: shapeSelect2.value,
       color: shapeColorPicker.value,
       size: parseInt(shapeSizeRange.value, 10),
+      x1: startX,
+      y1: startY,
+      x2: mouseX,
+      y2: mouseY
+    };
+  } else if (mode === 'highlight') {
+    return {
+      type: 'highlight',
+      color: highlightColorPicker.value,
+      opacity: parseInt(highlightOpacityRange.value, 10) / 100,
       x1: startX,
       y1: startY,
       x2: mouseX,
@@ -356,10 +388,7 @@ function showTextEditor(shape) {
     if (textEditor) {
       shape.text = textEditor.value.trim() || shape.text;
       shape.isEditing = false;
-
-      // Adjust text position based on font size for proper alignment
-      shape.y1 += shape.size * 0.25;  // Adjust the Y position for proper alignment
-
+      shape.y1 += shape.size * 0.25;
       destroyTextEditor();
       redrawAll();
     }
@@ -472,6 +501,17 @@ function drawShape(shape, isSelected) {
     drawLineOrShape(shape);
   } else if (type === 'text') {
     drawTextShape(shape);
+  } else if (type === 'highlight') {
+    const { color, opacity, x1, y1, x2, y2 } = shape;
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.globalAlpha = opacity;
+    const left = Math.min(x1, x2);
+    const top = Math.min(y1, y2);
+    const w = Math.abs(x2 - x1);
+    const h = Math.abs(y2 - y1);
+    ctx.fillRect(left, top, w, h);
+    ctx.restore();
   }
 }
 
@@ -537,46 +577,36 @@ function drawOutline(shape) {
   ctx.save();
 
   if (shape.type === 'text' && shape.text.trim() !== '') {
-    // Ensure text is present before drawing the outline
     const { text, font, size, x1, y1 } = shape;
     ctx.font = `${size}px ${font}`;
     const textWidth = ctx.measureText(text).width;
-    const textHeight = size; // Approximate text height
-
-    // Add padding to prevent overlap
+    const textHeight = size;
     const padding = 5;
 
-    // **Step 1: Draw Red Outline (Always Visible)**
     ctx.strokeStyle = 'red';
     ctx.lineWidth = 3;
     ctx.strokeRect(x1 - padding, y1 - padding, textWidth + 2 * padding, textHeight + 2 * padding);
 
-    // **Step 2: Draw Black Shadow (For Depth)**
     ctx.strokeStyle = 'black';
     ctx.lineWidth = 2;
     ctx.strokeRect(x1 - padding + 1, y1 - padding + 1, textWidth + 2 * padding - 2, textHeight + 2 * padding - 2);
 
-    // **Step 3: Draw White Border (Final Layer)**
     ctx.strokeStyle = 'white';
     ctx.lineWidth = 1;
     ctx.strokeRect(x1 - padding + 2, y1 - padding + 2, textWidth + 2 * padding - 4, textHeight + 2 * padding - 4);
   } else if (shape.type !== 'text') {
-    // Existing outline for shapes (Line, Circle, Rectangle)
     const outlineSize = (shape.size || 3) + 4;
 
-    // **Step 1: Draw Red Outline (Always Visible)**
     ctx.strokeStyle = 'red';
     ctx.lineWidth = outlineSize + 4;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     drawShapeOutline(shape);
 
-    // **Step 2: Draw Black Shadow (For Depth)**
     ctx.strokeStyle = 'black';
     ctx.lineWidth = outlineSize + 2;
     drawShapeOutline(shape);
 
-    // **Step 3: Draw White Border (Final Layer)**
     ctx.strokeStyle = 'white';
     ctx.lineWidth = outlineSize;
     drawShapeOutline(shape);
@@ -585,9 +615,6 @@ function drawOutline(shape) {
   ctx.restore();
 }
 
-
-
-// **Helper function to draw shape outlines**
 function drawShapeOutline(shape) {
   if (shape.type === 'line' || shape.type === 'arrow') {
     ctx.beginPath();
@@ -602,7 +629,7 @@ function drawShapeOutline(shape) {
     ctx.beginPath();
     ctx.ellipse(cx, cy, rx, ry, 0, 0, 2 * Math.PI);
     ctx.stroke();
-  } else if (shape.type === 'rect') {
+  } else if (shape.type === 'rect' || shape.type === 'highlight') {
     const left = Math.min(shape.x1, shape.x2);
     const top = Math.min(shape.y1, shape.y2);
     const w = Math.abs(shape.x2 - shape.x1);
@@ -610,8 +637,6 @@ function drawShapeOutline(shape) {
     ctx.strokeRect(left, top, w, h);
   }
 }
-
-
 
 // **Hit Testing for Selection**
 
@@ -642,7 +667,6 @@ function hitTestLineOrShape(shape, px, py) {
   const { type, x1, y1, x2, y2 } = shape;
 
   if (type === 'line' || type === 'arrow') {
-    // Check if the point is near the line shaft
     const A = px - x1;
     const B = py - y1;
     const C = x2 - x1;
@@ -657,10 +681,8 @@ function hitTestLineOrShape(shape, px, py) {
     else { xx = x1 + param * C; yy = y1 + param * D; }
     const dist = Math.sqrt((px - xx) ** 2 + (py - yy) ** 2);
 
-    // Selectable if near the shaft
     if (dist < threshold) return true;
 
-    // Check if the point is inside the arrowhead (triangle)
     if (type === 'arrow') {
       const arrowSize = 10 + (shape.size * 2);
       const angle = Math.atan2(y2 - y1, x2 - x1);
@@ -671,7 +693,7 @@ function hitTestLineOrShape(shape, px, py) {
 
       return pointInTriangle(px, py, x2, y2, arrowX1, arrowY1, arrowX2, arrowY2);
     }
-  } else if (type === 'circle' || type === 'rect') {
+  } else if (type === 'circle' || type === 'rect' || type === 'highlight') {
     const left = Math.min(x1, x2);
     const right = Math.max(x1, x2);
     const top = Math.min(y1, y2);
@@ -684,7 +706,6 @@ function hitTestLineOrShape(shape, px, py) {
   return false;
 }
 
-// **Helper function to check if a point is inside a triangle**
 function pointInTriangle(px, py, ax, ay, bx, by, cx, cy) {
   const areaOrig = Math.abs((bx - ax) * (cy - ay) - (cx - ax) * (by - ay));
   const area1 = Math.abs((ax - px) * (by - py) - (bx - px) * (ay - py));
@@ -697,14 +718,13 @@ function pointInTriangle(px, py, ax, ay, bx, by, cx, cy) {
 Close Tooltip on click close arrow in tooltip
 */
 document.addEventListener("DOMContentLoaded", () => {
-  // Function to close all tooltips
   function closeAllTooltips() {
     drawTooltip.style.display = "none";
     shapeTooltip.style.display = "none";
     textTooltip.style.display = "none";
+    highlightTooltip.style.display = "none";
   }
 
-  // Attach event listeners to each close button
   document.querySelectorAll(".close-btn").forEach(button => {
     button.addEventListener("click", closeAllTooltips);
   });

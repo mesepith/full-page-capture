@@ -175,6 +175,7 @@
       <button id="drawBtn">Add Line</button>
       <button id="drawShapeBtn">Draw Shape</button>
       <button id="drawTextBtn">Add Text</button>
+      <button id="highlightBtn">Highlight</button>
     </div>
 
     <!-- Right Section: Copy & Download Buttons -->
@@ -268,6 +269,24 @@
       <input type="range" id="textSizeRange" min="10" max="72" value="24" />
     </label>
     <!-- No "Text:" label or textarea—everything is in-canvas now. -->
+  </div>
+</div>
+
+<!-- Tooltip for highlight -->
+<div id="highlightTooltip" class="tooltip">
+  <div class="tooltip-header">
+    <span>Highlight Options</span>
+    <button class="close-btn" id="closeHighlightTooltipBtn">▲</button>
+  </div>
+  <div class="tooltip-options">
+    <label>
+      Color:
+      <input type="color" id="highlightColorPicker" value="#FFFF00" />
+    </label>
+    <label>
+      Opacity:
+      <input type="range" id="highlightOpacityRange" min="0" max="100" value="50" />
+    </label>
   </div>
 </div>
 
