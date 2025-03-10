@@ -80,7 +80,7 @@ function showTooltipBelowButton(tooltipEl, buttonEl) {
 
 // Highlight the active mode button
 function highlightButton(btn) {
-  [selectBtn, drawBtn, drawShapeBtn, drawTextBtn, highlightBtn].forEach(b => {
+  [selectBtn, drawBtn, drawShapeBtn, drawTextBtn, highlightBtn, blurBtn].forEach(b => {
     b.classList.remove('active-mode-button');
   });
   btn.classList.add('active-mode-button');
@@ -250,6 +250,13 @@ canvas.addEventListener('mousedown', (e) => {
         mode = 'highlight';
         highlightButton(highlightBtn);
         showTooltipBelowButton(highlightTooltip, highlightBtn);
+        isDrawing = true;
+        startX = clickX;
+        startY = clickY;
+      } else if( lastActiveMode === 'blur') {
+        mode = 'blur';
+        highlightButton(blurBtn);
+        showTooltipBelowButton(blurTooltip, blurBtn);
         isDrawing = true;
         startX = clickX;
         startY = clickY;
