@@ -61,6 +61,8 @@ let startY = 0;
 let mode = 'select'; // Current mode: 'select', 'line', 'shape', 'text', 'highlight'
 let lastActiveMode = 'select'; // Last active drawing mode
 let textEditor = null; // Reference to the text input field
+let lastX = 0;
+let lastY = 0;
 
 // **Helper Functions**
 
@@ -90,6 +92,7 @@ function closeAllTooltips() {
   shapeTooltip.style.display = 'none';
   textTooltip.style.display = 'none';
   highlightTooltip.style.display = 'none';
+  blurTooltip.style.display = 'none';
 }
 
 // **Mode Switching Event Listeners**
@@ -208,6 +211,8 @@ canvas.addEventListener('mousedown', (e) => {
     closeAllTooltips();
     selectedShapeIndex = foundIndex;
     isDragging = true;
+    lastX = clickX; // Set initial mouse position
+    lastY = clickY;
     const shape = shapes[foundIndex];
     dragOffsetX = clickX - shape.x1;
     dragOffsetY = clickY - shape.y1;
@@ -261,17 +266,19 @@ canvas.addEventListener('mousemove', (e) => {
 
   if (isDragging && selectedShapeIndex !== -1) {
     const shape = shapes[selectedShapeIndex];
+    const dx = mouseX - lastX; // Delta from last mouse position
+    const dy = mouseY - lastY;
     if (shape.type === 'text') {
-      shape.x1 = mouseX - dragOffsetX;
-      shape.y1 = mouseY - dragOffsetY;
-    } else {
-      const dx = mouseX - (shape.x1 + dragOffsetX);
-      const dy = mouseY - (shape.y1 + dragOffsetY);
+      shape.x1 += dx;
+      shape.y1 += dy;
+    } else { // For blur, highlight, etc.
       shape.x1 += dx;
       shape.y1 += dy;
       shape.x2 += dx;
       shape.y2 += dy;
     }
+    lastX = mouseX; // Update last position
+    lastY = mouseY;
     redrawAll();
   } else if (isDrawing && (mode === 'line' || mode === 'shape' || mode === 'highlight' || mode === 'blur')) {
     redrawAll();
@@ -695,6 +702,19 @@ function findTopShape(list, px, py) {
 }
 
 function hitTestShape(shape, px, py) {
+  if (shape.type === 'blur') { // Check for blur type
+    console.log('Hit test for blur shape');
+    const left = Math.min(shape.x1, shape.x2);
+    const right = Math.max(shape.x1, shape.x2);
+    const top = Math.min(shape.y1, shape.y2);
+    const bottom = Math.max(shape.y1, shape.y2);
+    const threshold = 10; // A small buffer for easier clicking
+    return (
+      px >= left - threshold && px <= right + threshold &&
+      py >= top - threshold && py <= bottom + threshold
+    );
+  }
+  
   if (shape.type === 'text') return hitTestText(shape, px, py);
   return hitTestLineOrShape(shape, px, py);
 }
@@ -770,6 +790,7 @@ document.addEventListener("DOMContentLoaded", () => {
     shapeTooltip.style.display = "none";
     textTooltip.style.display = "none";
     highlightTooltip.style.display = "none";
+    blurTooltip.style.display = "none";
   }
 
   document.querySelectorAll(".close-btn").forEach(button => {
