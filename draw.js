@@ -356,6 +356,10 @@ function showTextEditor(shape) {
     if (textEditor) {
       shape.text = textEditor.value.trim() || shape.text;
       shape.isEditing = false;
+
+      // Adjust text position based on font size for proper alignment
+      shape.y1 += shape.size * 0.25;  // Adjust the Y position for proper alignment
+
       destroyTextEditor();
       redrawAll();
     }
