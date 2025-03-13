@@ -71,7 +71,7 @@ function showTooltipBelowButton(tooltipEl, buttonEl) {
   tooltipEl.style.display = 'none';
   const buttonRect = buttonEl.getBoundingClientRect();
   const bodyRect = document.body.getBoundingClientRect();
-  const top = buttonRect.bottom - bodyRect.top + window.scrollY + 5;
+  const top = buttonEl.offsetTop + buttonEl.offsetHeight + 10;
   const left = buttonRect.left - bodyRect.left + window.scrollX;
   tooltipEl.style.top = top + 'px';
   tooltipEl.style.left = left + 'px';

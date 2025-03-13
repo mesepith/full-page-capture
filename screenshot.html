@@ -185,6 +185,118 @@
       <span id="loading" class="loading">Loading...</span>
       <button id="downloadBtn">Download</button>
     </div>
+
+      <!-- Tooltip for lines/arrows (optional) -->
+      <div id="drawTooltip" class="tooltip">
+        <div class="tooltip-header">
+          <span>Line Options</span>
+          <button class="close-btn" id="closeDrawTooltipBtn">&#x25B2;</button>
+        </div>
+        <div class="tooltip-options">
+          <label>
+            Shape:
+            <select id="lineShapeSelect">
+              <option value="arrow">Arrow</option>
+              <option value="line">Line</option>
+            </select>
+          </label>
+          <label>
+            Color:
+            <input type="color" id="lineColorPicker" value="#FF0000" />
+          </label>
+          <label>
+            Size:
+            <input type="range" id="lineSizeRange" min="1" max="20" value="3" />
+          </label>
+        </div>
+      </div>
+
+        <!-- Tooltip for circle/rect (optional) -->
+        <div id="shapeTooltip" class="tooltip">
+          <div class="tooltip-header">
+            <span>Shape Options</span>
+            <button class="close-btn" id="closeShapeTooltipBtn">&#x25B2;</button>
+          </div>
+          <div class="tooltip-options">
+            <label>
+              Shape:
+              <select id="shapeSelect2">
+                <option value="circle">Circle</option>
+                <option value="rect">Rectangle</option>
+              </select>
+            </label>
+            <label>
+              Color:
+              <input type="color" id="shapeColorPicker" value="#008000" />
+            </label>
+            <label>
+              Size:
+              <input type="range" id="shapeSizeRange" min="1" max="20" value="3" />
+            </label>
+          </div>
+        </div>
+
+        <!-- Tooltip for text -->
+        <!-- Tooltip for text (remove the Apply button) -->
+        <!-- NO TEXTAREA HERE -->
+        <div id="textTooltip" class="tooltip">
+          <div class="tooltip-header">
+            <span>Text Options</span>
+            <button class="close-btn" id="closeTextTooltipBtn">&#x25B2;</button>
+          </div>
+          <div class="tooltip-options">
+            <label>
+              Font:
+              <select id="textFontSelect">
+                <option value="Arial">Arial</option>
+                <option value="Times New Roman">Times New Roman</option>
+                <option value="Courier New">Courier New</option>
+              </select>
+            </label>
+            <label>
+              Color:
+              <input type="color" id="textColorPicker" value="#000000" />
+            </label>
+            <label>
+              Size:
+              <input type="range" id="textSizeRange" min="10" max="72" value="24" />
+            </label>
+            <!-- No "Text:" label or textarea—everything is in-canvas now. -->
+          </div>
+        </div>
+
+        <!-- Tooltip for highlight -->
+        <div id="highlightTooltip" class="tooltip">
+          <div class="tooltip-header">
+            <span>Highlight Options</span>
+            <button class="close-btn" id="closeHighlightTooltipBtn">▲</button>
+          </div>
+          <div class="tooltip-options">
+            <label>
+              Color:
+              <input type="color" id="highlightColorPicker" value="#FFFF00" />
+            </label>
+            <label>
+              Opacity:
+              <input type="range" id="highlightOpacityRange" min="0" max="100" value="50" />
+            </label>
+          </div>
+        </div>
+
+        <!-- Tooltip for blur -->
+        <div id="blurTooltip" class="tooltip">
+          <div class="tooltip-header">
+            <span>Blur Options</span>
+            <button class="close-btn" id="closeBlurTooltipBtn">▲</button>
+          </div>
+          <div class="tooltip-options">
+            <label>
+              Blur Intensity:
+              <input type="range" id="blurIntensityRange" min="1" max="10" value="5" />
+            </label>
+          </div>
+        </div>
+
   </div>
 
   <div class="content">
@@ -193,117 +305,6 @@
       <canvas id="drawingCanvas"></canvas>
     </div>
   </div>
-
-  <!-- Tooltip for lines/arrows (optional) -->
-  <div id="drawTooltip" class="tooltip">
-    <div class="tooltip-header">
-      <span>Line Options</span>
-      <button class="close-btn" id="closeDrawTooltipBtn">&#x25B2;</button>
-    </div>
-    <div class="tooltip-options">
-      <label>
-        Shape:
-        <select id="lineShapeSelect">
-          <option value="arrow">Arrow</option>
-          <option value="line">Line</option>
-        </select>
-      </label>
-      <label>
-        Color:
-        <input type="color" id="lineColorPicker" value="#FF0000" />
-      </label>
-      <label>
-        Size:
-        <input type="range" id="lineSizeRange" min="1" max="20" value="3" />
-      </label>
-    </div>
-  </div>
-
-  <!-- Tooltip for circle/rect (optional) -->
-  <div id="shapeTooltip" class="tooltip">
-    <div class="tooltip-header">
-      <span>Shape Options</span>
-      <button class="close-btn" id="closeShapeTooltipBtn">&#x25B2;</button>
-    </div>
-    <div class="tooltip-options">
-      <label>
-        Shape:
-        <select id="shapeSelect2">
-          <option value="circle">Circle</option>
-          <option value="rect">Rectangle</option>
-        </select>
-      </label>
-      <label>
-        Color:
-        <input type="color" id="shapeColorPicker" value="#008000" />
-      </label>
-      <label>
-        Size:
-        <input type="range" id="shapeSizeRange" min="1" max="20" value="3" />
-      </label>
-    </div>
-  </div>
-
-  <!-- Tooltip for text -->
-  <!-- Tooltip for text (remove the Apply button) -->
-<!-- NO TEXTAREA HERE -->
-<div id="textTooltip" class="tooltip">
-  <div class="tooltip-header">
-    <span>Text Options</span>
-    <button class="close-btn" id="closeTextTooltipBtn">&#x25B2;</button>
-  </div>
-  <div class="tooltip-options">
-    <label>
-      Font:
-      <select id="textFontSelect">
-        <option value="Arial">Arial</option>
-        <option value="Times New Roman">Times New Roman</option>
-        <option value="Courier New">Courier New</option>
-      </select>
-    </label>
-    <label>
-      Color:
-      <input type="color" id="textColorPicker" value="#000000" />
-    </label>
-    <label>
-      Size:
-      <input type="range" id="textSizeRange" min="10" max="72" value="24" />
-    </label>
-    <!-- No "Text:" label or textarea—everything is in-canvas now. -->
-  </div>
-</div>
-
-<!-- Tooltip for highlight -->
-<div id="highlightTooltip" class="tooltip">
-  <div class="tooltip-header">
-    <span>Highlight Options</span>
-    <button class="close-btn" id="closeHighlightTooltipBtn">▲</button>
-  </div>
-  <div class="tooltip-options">
-    <label>
-      Color:
-      <input type="color" id="highlightColorPicker" value="#FFFF00" />
-    </label>
-    <label>
-      Opacity:
-      <input type="range" id="highlightOpacityRange" min="0" max="100" value="50" />
-    </label>
-  </div>
-</div>
-
-<!-- Tooltip for blur -->
-<div id="blurTooltip" class="tooltip">
-  <div class="tooltip-header">
-    <span>Blur Options</span>
-    <button class="close-btn" id="closeBlurTooltipBtn">▲</button>
-  </div>
-  <div class="tooltip-options">
-    <label>
-      Blur Intensity:
-      <input type="range" id="blurIntensityRange" min="1" max="10" value="5" />
-    </label>
-  </div>
-</div>
 
 
 <!-- Added success message div -->
