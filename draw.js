@@ -391,10 +391,12 @@ function createNewTextShape(x, y) {
 }
 
 function showTextEditor(shape) {
+  // Remove any existing text editor
   destroyTextEditor();
   shape.isEditing = true;
   redrawAll();
 
+  // Create the input box
   textEditor = document.createElement('input');
   textEditor.type = 'text';
   textEditor.value = shape.text || '';
@@ -405,30 +407,36 @@ function showTextEditor(shape) {
   textEditor.style.padding = '2px 5px';
   textEditor.style.outline = 'none';
 
+  // Get the canvas's absolute position in the document
   const canvasRect = canvas.getBoundingClientRect();
-  textEditor.style.left = `${canvasRect.left + shape.x1}px`;
-  textEditor.style.top = `${canvasRect.top + shape.y1}px`;
+  const canvasTop = canvasRect.top + window.scrollY;
+  const canvasLeft = canvasRect.left + window.scrollX;
+
+  // Position the input box at the click location
+  textEditor.style.left = (canvasLeft + shape.x1) + 'px';
+  textEditor.style.top = (canvasTop + shape.y1) + 'px';
+
+  // Apply text styling
   textEditor.style.fontFamily = shape.font;
-  textEditor.style.fontSize = `${shape.size}px`;
+  textEditor.style.fontSize = shape.size + 'px';
   textEditor.style.color = shape.color;
   textEditor.style.width = 'auto';
   textEditor.style.minWidth = '50px';
 
+  // Add the input box to the page and focus it
   document.body.appendChild(textEditor);
   requestAnimationFrame(() => textEditor.focus());
 
-  function handleKeydown(ev) {
+  // Event handlers for editing
+  textEditor.addEventListener('input', () => autoResizeTextEditor(textEditor, shape));
+  autoResizeTextEditor(textEditor, shape);
+  textEditor.addEventListener('blur', finalizeEdit);
+  textEditor.addEventListener('keydown', (ev) => {
     if (ev.key === 'Enter') {
       ev.preventDefault();
       finalizeEdit();
     }
-  }
-
-  textEditor.addEventListener('input', () => autoResizeTextEditor(textEditor, shape));
-  autoResizeTextEditor(textEditor, shape);
-
-  textEditor.addEventListener('blur', finalizeEdit);
-  textEditor.addEventListener('keydown', handleKeydown);
+  });
 
   function finalizeEdit() {
     if (textEditor) {
@@ -439,9 +447,6 @@ function showTextEditor(shape) {
       redrawAll();
     }
   }
-
-  textEditor._blurHandler = finalizeEdit;
-  textEditor._keydownHandler = handleKeydown;
 }
 
 function autoResizeTextEditor(editor, shape) {
