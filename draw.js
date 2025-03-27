@@ -392,61 +392,54 @@ function createNewTextShape(x, y) {
 
 function showTextEditor(shape) {
   // Remove any existing text editor
-  destroyTextEditor();
-  shape.isEditing = true;
-  redrawAll();
-
-  // Create the input box
-  textEditor = document.createElement('input');
+  const textEditor = document.createElement('input');
   textEditor.type = 'text';
   textEditor.value = shape.text || '';
   textEditor.style.position = 'absolute';
   textEditor.style.zIndex = '9999';
   textEditor.style.background = 'rgba(255, 255, 255, 0.9)';
-  textEditor.style.border = '1px solid #ccc';
-  textEditor.style.padding = '2px 5px';
+  textEditor.style.border = 'none'; // No border to avoid visual offset
+  textEditor.style.padding = '2px 5px'; // 2px top, 5px left/right
   textEditor.style.outline = 'none';
 
-  // Get the canvas's absolute position in the document
+  // Get canvas position on the page
   const canvasRect = canvas.getBoundingClientRect();
   const canvasTop = canvasRect.top + window.scrollY;
   const canvasLeft = canvasRect.left + window.scrollX;
 
-  // Position the input box at the click location
-  textEditor.style.left = (canvasLeft + shape.x1) + 'px';
-  textEditor.style.top = (canvasTop + shape.y1) + 'px';
+  // Define constants
+  const paddingLeft = 5; // Horizontal padding
+  const paddingTop = 2;  // Vertical padding
+  const fontSize = shape.size; // Font size in pixels
+  const adjustment = fontSize * 0.05; // 5% of font size to adjust position
 
-  // Apply text styling
+  // Position the input box
+  textEditor.style.left = (canvasLeft + shape.x1 - paddingLeft) + 'px';
+  textEditor.style.top = (canvasTop + shape.y1 - paddingTop - adjustment) + 'px';
+
+  // Style the text
   textEditor.style.fontFamily = shape.font;
-  textEditor.style.fontSize = shape.size + 'px';
+  textEditor.style.fontSize = fontSize + 'px';
   textEditor.style.color = shape.color;
   textEditor.style.width = 'auto';
   textEditor.style.minWidth = '50px';
 
-  // Add the input box to the page and focus it
+  // Add to the page and focus
   document.body.appendChild(textEditor);
   requestAnimationFrame(() => textEditor.focus());
 
-  // Event handlers for editing
-  textEditor.addEventListener('input', () => autoResizeTextEditor(textEditor, shape));
-  autoResizeTextEditor(textEditor, shape);
-  textEditor.addEventListener('blur', finalizeEdit);
+  // Event handlers (simplified for clarity)
+  textEditor.addEventListener('blur', () => {
+    shape.text = textEditor.value.trim() || shape.text;
+    document.body.removeChild(textEditor);
+    redrawAll(); // Assume this redraws the canvas
+  });
   textEditor.addEventListener('keydown', (ev) => {
     if (ev.key === 'Enter') {
       ev.preventDefault();
-      finalizeEdit();
+      textEditor.blur(); // Trigger the blur event
     }
   });
-
-  function finalizeEdit() {
-    if (textEditor) {
-      shape.text = textEditor.value.trim() || shape.text;
-      shape.isEditing = false;
-      shape.y1 += shape.size * 0.25;
-      destroyTextEditor();
-      redrawAll();
-    }
-  }
 }
 
 function autoResizeTextEditor(editor, shape) {
